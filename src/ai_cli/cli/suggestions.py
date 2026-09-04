@@ -5,20 +5,15 @@ from prompt_toolkit.document import Document
 from prompt_toolkit.styles import Style
 
 SLASH_COMMANDS = {
-    "/help": "Show all available slash commands & guide",
-    "/pwd": "Print current working directory",
-    "/cd": "Change working directory (/cd ~/Desktop or /cd ..)",
-    "/whoami": "Show current user, OS & environment info",
-    "/model": "Switch or list supported Groq models (/model <num/id>)",
-    "/new": "Start a fresh new conversation session",
-    "/end": "End current conversation session and start fresh",
-    "/sessions": "List & resume previous conversations (/session <num>)",
-    "/delete": "Delete sessions (/delete 1 2 3... or /delete all)",
-    "/doctor": "Check API keys, ChromaDB status & environment",
-    "/update": "Check & pull latest Anton CLI version with uv",
+    "/model": "Switch active LLM model (/model <num/id>)",
+    "/new": "Start a fresh conversation session",
+    "/sessions": "List & resume previous conversations",
+    "/delete": "Delete conversations (/delete 1 2 3... or /delete all)",
+    "/doctor": "Check API keys and system health",
+    "/update": "Update Anton CLI to latest version",
     "/clear": "Clear the terminal screen",
-    "/exit": "Exit Anton CLI session",
-    "/quit": "Exit Anton CLI session",
+    "/help": "Show available commands & usage tips",
+    "/exit": "Exit Anton CLI",
 }
 
 # Clean modern theme for Prompt Toolkit (all-white prompt, sleek completion menu)
