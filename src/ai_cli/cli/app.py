@@ -507,8 +507,15 @@ async def run_interactive_session(model_name: Optional[str] = None) -> None:
                 if thoughts and thoughts not in displayed_thoughts:
                     render_thinking(thoughts)
 
+                # If the turn was cut off mid-thinking without reaching the response phase
+                if not final_response:
+                    if thoughts:
+                        final_response = "The model's response reached the maximum output token limit during reasoning. Please re-try with a more specific query or switch models using `/model`."
+                    else:
+                        final_response = raw_last_content
+
                 # Render final AI response in clean box
-                render_response_box(final_response or raw_last_content, model_name=ctx.current_model)
+                render_response_box(final_response, model_name=ctx.current_model)
 
                 # Keep workspace_path synced in case agent called change_directory_tool
                 ctx.workspace_path = get_current_working_dir()

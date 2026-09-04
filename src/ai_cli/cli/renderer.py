@@ -111,16 +111,29 @@ import re
 def extract_thoughts_and_response(content: str) -> Tuple[Optional[str], str]:
     """
     Extract <think>...</think> or reasoning tags from model content.
+    Handles both closed and unclosed <think> blocks gracefully.
     Returns (thoughts, final_response).
     """
     if not content:
         return (None, "")
+
+    # 1. Standard closed <think>...</think> pattern
     think_pattern = re.compile(r"<think>(.*?)</think>", re.DOTALL | re.IGNORECASE)
     match = think_pattern.search(content)
     if match:
         thoughts = match.group(1).strip()
         response = think_pattern.sub("", content).strip()
         return (thoughts if thoughts else None, response)
+
+    # 2. Unclosed <think>... pattern (if model hits max output token limit mid-thought)
+    unclosed_pattern = re.compile(r"<think>(.*)", re.DOTALL | re.IGNORECASE)
+    unclosed_match = unclosed_pattern.search(content)
+    if unclosed_match:
+        thoughts = unclosed_match.group(1).strip()
+        # Anything before <think> was the response
+        response = content[:unclosed_match.start()].strip()
+        return (thoughts if thoughts else None, response)
+
     return (None, content.strip())
 
 
@@ -140,13 +153,38 @@ def render_user_input(content: str) -> None:
 
 
 def render_thinking(thoughts: str) -> None:
-    """Render model reasoning/thinking process in a specialized yellow/dim box."""
+    """Render model reasoning/thinking process in a specialized yellow/dim box with loop protection."""
     if not thoughts or not thoughts.strip():
         return
+
+    # Deduplicate repetitive thought loops
+    raw_lines = thoughts.strip().split("\n")
+    cleaned_lines = []
+    prev_line = ""
+    consecutive_repeats = 0
+    truncated_loop = False
+
+    for line in raw_lines:
+        trimmed = line.strip()
+        if trimmed == prev_line and trimmed:
+            consecutive_repeats += 1
+            if consecutive_repeats <= 2:
+                cleaned_lines.append(line)
+            elif not truncated_loop:
+                cleaned_lines.append("... [repetitive reasoning loop truncated]")
+                truncated_loop = True
+        else:
+            consecutive_repeats = 0
+            prev_line = trimmed
+            truncated_loop = False
+            cleaned_lines.append(line)
+
+    display_thoughts = "\n".join(cleaned_lines)
+
     console.print()
     console.print(
         Panel(
-            Text(thoughts.strip(), style="italic #e2e8f0"),
+            Text(display_thoughts, style="italic #e2e8f0"),
             title="[bold yellow]✦ Thinking & Reasoning[/bold yellow]",
             title_align="left",
             border_style="yellow",
