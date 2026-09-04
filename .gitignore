@@ -33,6 +33,8 @@ ENV/
 
 # Anton data and persistent Chroma storage
 data/chroma/
+data/sessions/
+
 .anton/
 
 # IDE / Editor files

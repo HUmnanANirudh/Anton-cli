@@ -10,12 +10,12 @@ chmod +x "$SCRIPT_DIR/anton.sh"
 
 ln -sf "$SCRIPT_DIR/anton.sh" "$BIN_DIR/anton"
 
-echo "✅ Successfully linked Anton CLI to $BIN_DIR/anton"
+echo "Successfully linked Anton CLI to $BIN_DIR/anton"
 echo ""
 echo "You can now run Anton anywhere simply by typing:"
 echo "  anton"
 echo ""
 if [[ ":$PATH:" != *":$BIN_DIR:"* ]]; then
-    echo "⚠️ Note: Make sure $BIN_DIR is in your PATH. You can add it with:"
+    echo "Note: Make sure $BIN_DIR is in your PATH. You can add it with:"
     echo '  export PATH="$HOME/.local/bin:$PATH"'
 fi

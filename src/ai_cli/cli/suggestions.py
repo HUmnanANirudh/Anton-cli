@@ -6,9 +6,14 @@ from prompt_toolkit.styles import Style
 
 SLASH_COMMANDS = {
     "/help": "Show all available slash commands & guide",
+    "/pwd": "Print current working directory",
+    "/cd": "Change working directory (/cd ~/Desktop or /cd ..)",
+    "/whoami": "Show current user, OS & environment info",
     "/model": "Switch or list supported Groq models (/model <num/id>)",
     "/new": "Start a fresh new conversation session",
+    "/end": "End current conversation session and start fresh",
     "/sessions": "List & resume previous conversations (/session <num>)",
+    "/delete": "Delete a saved conversation (/delete <num>)",
     "/index": "Index current workspace into ChromaDB vector store",
     "/search": "Search the live web via Tavily API (/search query)",
     "/vsearch": "Query local ChromaDB code vector store (/vsearch query)",
@@ -23,7 +28,7 @@ SLASH_COMMANDS = {
 # Clean modern theme for Prompt Toolkit (all-white prompt, sleek completion menu)
 CLI_STYLE = Style.from_dict(
     {
-        # Prompt styling (clean white / subtle cyan)
+        # Prompt styling (clean white)
         "prompt.chevron": "bold #ffffff",
         # Dropdown Completion Menu
         "completion-menu": "bg:#1e1e2e #cdd6f4",

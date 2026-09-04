@@ -32,6 +32,11 @@ from ai_cli.memory.retriever import CodeRetriever
 from ai_cli.memory.sessions import SessionManager
 from ai_cli.providers.factory import ProviderFactory
 from ai_cli.providers.groq import SUPPORTED_GROQ_MODELS
+from ai_cli.tools.filesystem import (
+    change_working_dir,
+    get_current_working_dir,
+    get_system_context,
+)
 from ai_cli.tools.web.search import search_web
 
 
@@ -74,14 +79,15 @@ def get_prompt_tokens() -> List[Tuple[str, str]]:
 
 async def handle_slash_command(command_str: str, ctx: ReplContext) -> bool:
     """
-    Handle slash commands in REPL.
+    Handle slash commands and direct CLI shortcuts in REPL.
     Returns True if execution should continue, False if REPL should exit.
     """
     parts = command_str.strip().split(maxsplit=1)
-    cmd = parts[0].lower()
+    raw_cmd = parts[0].lower()
+    cmd = "/" + raw_cmd.lstrip("/")
     arg = parts[1] if len(parts) > 1 else ""
 
-    if cmd in ["/exit", "/quit"]:
+    if cmd in ["/exit", "/quit", "/q", "/:q", "/:wq", "/bye", "/goodbye"]:
         console.print("[white]✦ Goodbye![/white]")
         return False
 
@@ -121,12 +127,49 @@ async def handle_slash_command(command_str: str, ctx: ReplContext) -> bool:
             console.print(f"[red]Could not find model matching '{arg}'. Type /model to see available models.[/red]")
         return True
 
+    if cmd == "/pwd":
+        console.print(f"[bold white]✦ Current Directory:[/bold white] [bold cyan]{get_current_working_dir()}[/bold cyan]")
+        return True
+
+    if cmd == "/cd":
+        if not arg.strip():
+            console.print("[red]Usage: /cd <directory_path>[/red]")
+            return True
+        result = change_working_dir(arg.strip())
+        ctx.workspace_path = get_current_working_dir()
+        if result.startswith("Error") or result.startswith("Failed"):
+            console.print(f"[red]{result}[/red]")
+        else:
+            console.print(f"[bold green]✓[/bold green] [bold white]{result}[/bold white]")
+        return True
+
+    if cmd == "/whoami":
+        console.print("[bold white]✦ System Environment Context:[/bold white]")
+        console.print(f"[dim]{get_system_context()}[/dim]\n")
+        return True
+
     if cmd == "/new":
         ctx.session_id = ctx.session_mgr.create_session_id()
         ctx.session_title = "New Conversation"
         ctx.messages = []
         ctx.initial_turn = True
         console.print(f"[bold green]✦ Started new conversation session ({ctx.session_id})[/bold green]")
+        return True
+
+    if cmd == "/end":
+        if ctx.messages:
+            ctx.session_mgr.save_session(
+                session_id=ctx.session_id,
+                messages=ctx.messages,
+                workspace_path=ctx.workspace_path,
+            )
+        old_id = ctx.session_id
+        ctx.session_id = ctx.session_mgr.create_session_id()
+        ctx.session_title = "New Conversation"
+        ctx.messages = []
+        ctx.initial_turn = True
+        console.print(f"[bold green]✦ Ended conversation session ({old_id}).[/bold green]")
+        console.print(f"[bold cyan]✦ Ready for new conversation ({ctx.session_id}).[/bold cyan]\n")
         return True
 
     if cmd in ["/sessions", "/history"]:
@@ -169,6 +212,32 @@ async def handle_slash_command(command_str: str, ctx: ReplContext) -> bool:
                 render_error(f"Failed to load session {target.session_id}")
         else:
             console.print(f"[red]Invalid session number '{arg}'. Type /sessions to see available conversations.[/red]")
+        return True
+
+    if cmd == "/delete":
+        if not arg.strip():
+            console.print("[red]Usage: /delete <number>[/red]")
+            return True
+        if not arg.strip().isdigit():
+            console.print("[red]Please specify the session number to delete. (e.g. /delete 1)[/red]")
+            return True
+        idx = int(arg.strip()) - 1
+        sessions = ctx.session_mgr.list_sessions()
+        if 0 <= idx < len(sessions):
+            target = sessions[idx]
+            deleted = ctx.session_mgr.delete_session(target.session_id)
+            if deleted:
+                console.print(f"[bold green]✓ Deleted session [{idx + 1}]:[/bold green] [bold white]\"{target.title}\"[/bold white]")
+                if target.session_id == ctx.session_id:
+                    ctx.session_id = ctx.session_mgr.create_session_id()
+                    ctx.session_title = "New Conversation"
+                    ctx.messages = []
+                    ctx.initial_turn = True
+                    console.print("[dim]Switched to a fresh new conversation.[/dim]")
+            else:
+                console.print(f"[red]Failed to delete session {target.session_id}.[/red]")
+        else:
+            console.print(f"[red]Invalid session number '{arg}'. Type /sessions to list conversations.[/red]")
         return True
 
     if cmd == "/help":
@@ -302,8 +371,25 @@ async def run_interactive_session(model_name: Optional[str] = None) -> None:
             
             ctx.initial_turn = False
 
-            # Handle slash commands
-            if clean_input.startswith("/"):
+            # Direct exit/quit checking (natural language or direct command)
+            lower_input = clean_input.lower().strip().rstrip("!.;")
+            if lower_input in [
+                "exit", "quit", "q", ":q", ":wq", "bye", "goodbye",
+                "exit session", "quit session", "exit the session", "quit the session",
+                "close", "close session"
+            ]:
+                console.print("[white]✦ Goodbye![/white]")
+                break
+
+            if lower_input in ["end session", "end the session", "stop session", "finish session"]:
+                await handle_slash_command("/end", ctx)
+                continue
+
+            # Handle slash commands or direct CLI utility commands
+            if clean_input.startswith("/") or lower_input in [
+                "pwd", "clear", "cls", "whoami", "help", "doctor", "new", "end",
+                "sessions", "history", "models", "model", "eval", "update"
+            ] or lower_input.startswith("cd ") or lower_input.startswith("delete "):
                 should_continue = await handle_slash_command(clean_input, ctx)
                 if not should_continue:
                     break
@@ -330,6 +416,9 @@ async def run_interactive_session(model_name: Optional[str] = None) -> None:
                 ctx.messages = result_state.get("messages", ctx.messages)
                 last_msg = ctx.messages[-1]
                 render_markdown(str(last_msg.content))
+
+                # Keep workspace_path synced in case agent called change_directory_tool
+                ctx.workspace_path = get_current_working_dir()
 
                 # Persist session to disk
                 ctx.session_mgr.save_session(

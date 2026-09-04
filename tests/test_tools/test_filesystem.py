@@ -3,6 +3,11 @@
 import tempfile
 from pathlib import Path
 from ai_cli.tools.filesystem.grep import grep_codebase
+from ai_cli.tools.filesystem.nav import (
+    change_working_dir,
+    get_current_working_dir,
+    get_system_context,
+)
 from ai_cli.tools.filesystem.patch import patch_file
 from ai_cli.tools.filesystem.read import read_file
 from ai_cli.tools.filesystem.tree import build_tree
@@ -68,3 +73,33 @@ def test_tree_and_grep():
         assert grep_res.total_matches == 1
         assert grep_res.matches[0].line_number == 1
         assert "SECRET_KEY" in grep_res.matches[0].line_content
+
+
+def test_navigation_and_system_context():
+    """Verify get_current_working_dir, change_working_dir, and get_system_context."""
+    original_cwd = get_current_working_dir()
+    assert Path(original_cwd).exists()
+
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        res = change_working_dir(tmp_dir)
+        assert "Successfully changed" in res
+        assert get_current_working_dir() == str(Path(tmp_dir).resolve())
+
+        # Test desktop/home shortcuts
+        home_res = change_working_dir("home")
+        assert "Successfully changed" in home_res
+        assert get_current_working_dir() == str(Path.home().resolve())
+
+        # Test invalid directory
+        err_res = change_working_dir("/non_existent_dir_123456789")
+        assert "does not exist" in err_res
+
+        # Test system context output
+        ctx_info = get_system_context()
+        assert "Working Directory:" in ctx_info
+        assert "Operating System:" in ctx_info
+        assert "Python Version:" in ctx_info
+
+    # Restore original working dir
+    change_working_dir(original_cwd)
+    assert get_current_working_dir() == original_cwd

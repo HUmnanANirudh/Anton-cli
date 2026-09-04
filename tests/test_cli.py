@@ -2,6 +2,7 @@
 
 import pytest
 from unittest.mock import AsyncMock, patch
+from langchain_core.messages import HumanMessage
 from prompt_toolkit.document import Document
 from ai_cli.cli.app import handle_slash_command
 from ai_cli.cli.renderer import render_banner
@@ -69,7 +70,7 @@ async def test_handle_slash_commands():
     assert ctx.current_model == "llama-3.1-8b-instant"
 
     # /new should reset messages
-    ctx.messages = ["sample"]
+    ctx.messages = [HumanMessage(content="sample")]
     cont_new = await handle_slash_command("/new", ctx)
     assert cont_new is True
     assert len(ctx.messages) == 0
@@ -77,6 +78,39 @@ async def test_handle_slash_commands():
     # /exit should return False (exit loop)
     cont_exit = await handle_slash_command("/exit", ctx)
     assert cont_exit is False
+
+    # /pwd should print directory and return True
+    cont_pwd = await handle_slash_command("/pwd", ctx)
+    assert cont_pwd is True
+
+    # /whoami should print environment and return True
+    cont_whoami = await handle_slash_command("/whoami", ctx)
+    assert cont_whoami is True
+
+    # /cd should change directory
+    cont_cd = await handle_slash_command("/cd .", ctx)
+    assert cont_cd is True
+
+    # /end should end session and start fresh
+    ctx.messages = [HumanMessage(content="hello")]
+    cont_end = await handle_slash_command("/end", ctx)
+    assert cont_end is True
+    assert len(ctx.messages) == 0
+
+    # /delete should handle invalid and valid session indices
+    cont_del_invalid = await handle_slash_command("/delete 999", ctx)
+    assert cont_del_invalid is True
+
+    # Direct slashless exit and quit commands should return False
+    assert await handle_slash_command("exit", ctx) is False
+    assert await handle_slash_command("quit", ctx) is False
+    assert await handle_slash_command("q", ctx) is False
+    assert await handle_slash_command("bye", ctx) is False
+
+    # Direct slashless pwd, whoami, cd
+    assert await handle_slash_command("pwd", ctx) is True
+    assert await handle_slash_command("whoami", ctx) is True
+    assert await handle_slash_command("cd .", ctx) is True
 
     # /update should return True
     with patch("ai_cli.cli.app.update_anton", new_callable=AsyncMock) as mock_up:

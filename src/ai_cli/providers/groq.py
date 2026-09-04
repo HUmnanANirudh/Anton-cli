@@ -105,7 +105,7 @@ class GroqProvider(BaseLLMProvider):
 
     def __init__(self, api_key: Optional[str] = None):
         settings = get_settings()
-        self.api_key = api_key or settings.GROQ_API_KEY
+        self.api_key = api_key if api_key is not None else settings.GROQ_API_KEY
         self.active_model = settings.GROQ_MODEL
         self.default_eval_model = settings.GROQ_EVAL_MODEL
 

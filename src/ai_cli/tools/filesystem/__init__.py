@@ -1,6 +1,11 @@
 """Filesystem tools package."""
 
 from ai_cli.tools.filesystem.grep import GrepMatch, GrepResult, grep_codebase
+from ai_cli.tools.filesystem.nav import (
+    change_working_dir,
+    get_current_working_dir,
+    get_system_context,
+)
 from ai_cli.tools.filesystem.patch import PatchResult, generate_diff, patch_file
 from ai_cli.tools.filesystem.read import FileReadResult, read_file
 from ai_cli.tools.filesystem.tree import build_tree
@@ -18,4 +23,7 @@ __all__ = [
     "grep_codebase",
     "GrepMatch",
     "GrepResult",
+    "get_current_working_dir",
+    "change_working_dir",
+    "get_system_context",
 ]

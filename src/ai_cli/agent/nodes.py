@@ -12,6 +12,9 @@ from ai_cli.memory.embeddings import get_embeddings
 from ai_cli.memory.retriever import CodeRetriever
 from ai_cli.tools.filesystem import (
     build_tree,
+    change_working_dir,
+    get_current_working_dir,
+    get_system_context,
     grep_codebase,
     patch_file,
     read_file,
@@ -118,12 +121,33 @@ def semantic_search_codebase_tool(query: str, n_results: int = 4) -> str:
     return retriever.format_context_for_llm(query=query, n_results=n_results)
 
 
+@tool
+def get_current_directory_tool() -> str:
+    """Get the current working directory path where Anton is currently operating."""
+    return f"Current working directory: {get_current_working_dir()}"
+
+
+@tool
+def change_directory_tool(target_directory: str) -> str:
+    """Change the active working directory (e.g. '~/Desktop', '..', 'src'). Expands '~' automatically."""
+    return change_working_dir(target_directory)
+
+
+@tool
+def get_system_environment_tool() -> str:
+    """Inspect the current environment: user identity (whoami), OS, Python version, working directory, and Git branch."""
+    return get_system_context()
+
+
 ALL_TOOLS = [
     read_file_tool,
     write_file_tool,
     patch_file_tool,
     build_tree_tool,
     grep_codebase_tool,
+    get_current_directory_tool,
+    change_directory_tool,
+    get_system_environment_tool,
     execute_shell_tool,
     search_web_tool,
     fetch_page_tool,
