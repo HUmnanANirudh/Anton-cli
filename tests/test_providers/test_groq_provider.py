@@ -35,4 +35,5 @@ def test_groq_model_instantiation():
     assert chat_model.temperature == 0.7
 
     eval_model = provider.get_eval_model()
-    assert eval_model.temperature == 0.0
+    # Note: ChatGroq converts 0.0 to 1e-8 for Groq API compatibility
+    assert eval_model.temperature == pytest.approx(0.0, abs=1e-5)
