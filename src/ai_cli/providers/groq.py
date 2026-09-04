@@ -10,11 +10,18 @@ from ai_cli.providers.base import BaseLLMProvider
 # Curated registry of supported Groq production and preview models
 SUPPORTED_GROQ_MODELS: List[Dict[str, str]] = [
     {
+        "id": "openai/gpt-oss-20b",
+        "name": "OpenAI GPT-OSS 20B",
+        "speed": "1000 t/s",
+        "context": "131k",
+        "type": "Production (Default)",
+    },
+    {
         "id": "llama-3.3-70b-versatile",
         "name": "Llama 3.3 70B Versatile",
         "speed": "280 t/s",
         "context": "131k",
-        "type": "Production (Default)",
+        "type": "Production",
     },
     {
         "id": "llama-3.1-8b-instant",
@@ -29,13 +36,6 @@ SUPPORTED_GROQ_MODELS: List[Dict[str, str]] = [
         "speed": "500 t/s",
         "context": "131k",
         "type": "Production",
-    },
-    {
-        "id": "openai/gpt-oss-20b",
-        "name": "OpenAI GPT-OSS 20B",
-        "speed": "1000 t/s",
-        "context": "131k",
-        "type": "Production (Ultra-Fast)",
     },
     {
         "id": "groq/compound",

@@ -23,8 +23,8 @@ class Settings(BaseSettings):
 
     # Groq API Configuration (Primary LLM & Multi-Agent Evaluations)
     GROQ_API_KEY: Optional[str] = Field(default=None, validation_alias="GROQ_API_KEY")
-    GROQ_MODEL: str = Field(default="llama-3.3-70b-versatile", validation_alias="GROQ_MODEL")
-    GROQ_EVAL_MODEL: str = Field(default="llama-3.3-70b-versatile", validation_alias="GROQ_EVAL_MODEL")
+    GROQ_MODEL: str = Field(default="openai/gpt-oss-20b", validation_alias="GROQ_MODEL")
+    GROQ_EVAL_MODEL: str = Field(default="openai/gpt-oss-20b", validation_alias="GROQ_EVAL_MODEL")
 
     # Tavily Search API Configuration (Primary Web Search)
     TAVILY_API_KEY: Optional[str] = Field(default=None, validation_alias="TAVILY_API_KEY")

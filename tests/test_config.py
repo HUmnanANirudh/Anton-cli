@@ -9,7 +9,7 @@ def test_default_settings():
     settings = Settings()
     assert settings.APP_NAME == "Anton CLI"
     assert settings.APP_VERSION == "0.1"
-    assert settings.GROQ_MODEL == "llama-3.3-70b-versatile"
+    assert settings.GROQ_MODEL == "openai/gpt-oss-20b"
     assert settings.CHROMA_PERSIST_DIR == "data/chroma"
     assert settings.ENABLE_INPUT_GUARDRAILS is True
     assert settings.ENABLE_OUTPUT_GUARDRAILS is True
