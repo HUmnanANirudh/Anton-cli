@@ -6,6 +6,8 @@ from prompt_toolkit.styles import Style
 
 SLASH_COMMANDS = {
     "/help": "Show all available slash commands & guide",
+    "/new": "Start a fresh new conversation session",
+    "/sessions": "List & resume previous conversations (/session <num>)",
     "/index": "Index current workspace into ChromaDB vector store",
     "/search": "Search the live web via Tavily API (/search query)",
     "/vsearch": "Query local ChromaDB code vector store (/vsearch query)",
@@ -21,6 +23,7 @@ SLASH_COMMANDS = {
 CLI_STYLE = Style.from_dict(
     {
         # Prompt styling
+        "prompt.chevron": "bold #38bdf8",
         "prompt.star": "bold #38bdf8",
         "prompt.name": "bold #60a5fa",
         "prompt.dir": "#94a3b8",

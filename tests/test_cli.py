@@ -45,20 +45,30 @@ def test_slash_command_completer():
     assert completions[0].text == "/update"
 
 
+from ai_cli.cli.app import ReplContext, handle_slash_command
+
 @pytest.mark.asyncio
 async def test_handle_slash_commands():
     """Verify slash command execution."""
+    ctx = ReplContext()
+
     # /help should return True (continue loop)
-    cont_help = await handle_slash_command("/help")
+    cont_help = await handle_slash_command("/help", ctx)
     assert cont_help is True
 
+    # /new should reset messages
+    ctx.messages = ["sample"]
+    cont_new = await handle_slash_command("/new", ctx)
+    assert cont_new is True
+    assert len(ctx.messages) == 0
+
     # /exit should return False (exit loop)
-    cont_exit = await handle_slash_command("/exit")
+    cont_exit = await handle_slash_command("/exit", ctx)
     assert cont_exit is False
 
     # /update should return True
     with patch("ai_cli.cli.app.update_anton", new_callable=AsyncMock) as mock_up:
         mock_up.return_value = True
-        cont_update = await handle_slash_command("/update")
+        cont_update = await handle_slash_command("/update", ctx)
         assert cont_update is True
         mock_up.assert_called_once()

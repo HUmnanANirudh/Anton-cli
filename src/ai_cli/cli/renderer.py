@@ -1,7 +1,7 @@
-"""Rich terminal UI renderer with Gemini CLI aesthetic for Anton."""
+"""Rich terminal UI renderer with Gemini CLI aesthetic and session manager for Anton."""
 
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 from rich.align import Align
 from rich.box import DOUBLE_EDGE, HEAVY, ROUNDED, SIMPLE
 from rich.console import Console
@@ -11,75 +11,96 @@ from rich.syntax import Syntax
 from rich.table import Table
 from rich.text import Text
 from ai_cli.config.settings import get_settings
+from ai_cli.memory.sessions import SessionInfo
 
 console = Console()
 
 
-def render_banner() -> None:
-    """Render a modern Gemini-inspired header banner."""
+def render_banner(sessions: Optional[List[SessionInfo]] = None) -> None:
+    """Render the Gemini CLI pixel-art logo, getting started tips, and recent sessions."""
     settings = get_settings()
 
-    # Title with stylized gradient-like styling
-    title_text = Text()
-    title_text.append("✦ ", style="bold bright_cyan")
-    title_text.append("ANTON", style="bold bright_white")
-    title_text.append(f" v{settings.APP_VERSION}", style="bold cyan")
-    title_text.append("  •  ", style="dim")
-    title_text.append("Autonomous AI Coding Agent", style="dim italic")
+    # 1. Pixel Art Logo (> ANTON) with gradient colors
+    logo_segments = [
+        ("  █  ", "bold #38bdf8"),
+        ("  ▄█████▄   ", "#38bdf8"),
+        ("███▄   ██  ", "#60a5fa"),
+        ("█████████   ", "#818cf8"),
+        ("▄██████▄   ", "#a855f7"),
+        ("███▄   ██ \n", "#ec4899"),
 
-    # Badges row
-    status_row = Text()
-    
-    # Model status
-    if settings.GROQ_API_KEY:
-        status_row.append(" ⚡ Groq: ", style="dim")
-        status_row.append(f"{settings.GROQ_MODEL} ", style="bold green")
-    else:
-        status_row.append(" ⚡ Groq: ", style="dim")
-        status_row.append("No API Key ", style="bold yellow")
+        (" ▄██ ", "bold #38bdf8"),
+        (" ███   ███  ", "#38bdf8"),
+        ("████▄  ██     ", "#60a5fa"),
+        ("███     ", "#818cf8"),
+        ("███    ███  ", "#a855f7"),
+        ("████▄  ██ \n", "#ec4899"),
 
-    # Search status
-    if settings.TAVILY_API_KEY:
-        status_row.append(" 🔍 Search: ", style="dim")
-        status_row.append("Tavily Active ", style="bold bright_blue")
-    else:
-        status_row.append(" 🔍 Search: ", style="dim")
-        status_row.append("Offline ", style="dim")
+        ("▀███ ", "bold #38bdf8"),
+        (" █████████  ", "#38bdf8"),
+        ("██ ███ ██     ", "#60a5fa"),
+        ("███     ", "#818cf8"),
+        ("███    ███  ", "#a855f7"),
+        ("██ ███ ██ \n", "#ec4899"),
 
-    # Vector store status
-    status_row.append(" 💾 ChromaDB: ", style="dim")
-    status_row.append(f"{settings.CHROMA_PERSIST_DIR}", style="bold magenta")
+        (" ▀██ ", "bold #38bdf8"),
+        (" ███   ███  ", "#38bdf8"),
+        ("██  ▀████     ", "#60a5fa"),
+        ("███     ", "#818cf8"),
+        ("███    ███  ", "#a855f7"),
+        ("██  ▀████ \n", "#ec4899"),
 
-    # Shortcuts row
-    help_row = Text("\nType ", style="dim")
-    help_row.append("/", style="bold bright_cyan")
-    help_row.append(" for slash commands (", style="dim")
-    help_row.append("/help", style="bold cyan")
-    help_row.append(", ", style="dim")
-    help_row.append("/index", style="bold cyan")
-    help_row.append(", ", style="dim")
-    help_row.append("/search", style="bold cyan")
-    help_row.append(", ", style="dim")
-    help_row.append("/eval", style="bold cyan")
-    help_row.append(") • Press ", style="dim")
-    help_row.append("Tab", style="bold white")
-    help_row.append(" to autocomplete • ", style="dim")
-    help_row.append("Ctrl+C", style="bold white")
-    help_row.append(" to exit", style="dim")
+        ("  ▀  ", "bold #38bdf8"),
+        (" ███   ███  ", "#38bdf8"),
+        ("██    ███     ", "#60a5fa"),
+        ("███      ", "#818cf8"),
+        ("▀██████▀   ", "#a855f7"),
+        ("██    ███ \n", "#ec4899"),
+    ]
 
-    content = Text()
-    content.append(status_row)
-    content.append(help_row)
+    logo_text = Text()
+    for text, style in logo_segments:
+        logo_text.append(text, style=style)
 
-    panel = Panel(
-        content,
-        title=title_text,
-        title_align="left",
-        border_style="bright_blue",
-        box=ROUNDED,
-        padding=(0, 1),
-    )
-    console.print(panel)
+    console.print()
+    console.print(logo_text)
+
+    # 2. Tips for getting started (matching Gemini CLI format)
+    tips_text = Text()
+    tips_text.append("Tips for getting started:\n", style="bold white")
+    tips_text.append("1. Ask questions, edit files, or run commands.\n", style="dim")
+    tips_text.append("2. Be specific for the best results.\n", style="dim")
+    tips_text.append("3. Type ", style="dim")
+    tips_text.append("/", style="bold cyan")
+    tips_text.append(" for slash commands (", style="dim")
+    tips_text.append("/help", style="bold cyan")
+    tips_text.append(", ", style="dim")
+    tips_text.append("/index", style="bold cyan")
+    tips_text.append(", ", style="dim")
+    tips_text.append("/search", style="bold cyan")
+    tips_text.append(", ", style="dim")
+    tips_text.append("/eval", style="bold cyan")
+    tips_text.append(").\n", style="dim")
+
+    console.print(tips_text)
+
+    # 3. Previous Sessions List (if any exist)
+    if sessions:
+        sessions_header = Text("Previous Conversations:\n", style="bold #a855f7")
+        console.print(sessions_header)
+        for i, s in enumerate(sessions[:5], 1):
+            s_line = Text()
+            s_line.append(f"  [{i}] ", style="bold cyan")
+            s_line.append(f"{s.title} ", style="bold white")
+            s_line.append(f"({s.message_count} msgs • {s.updated_at or s.created_at})", style="dim")
+            console.print(s_line)
+        
+        new_line = Text()
+        new_line.append("  [N] ", style="bold green")
+        new_line.append("✦ Start a New Conversation ", style="bold green")
+        new_line.append("(Default - press Enter or type your prompt)\n", style="dim")
+        console.print(new_line)
+        console.print("[dim]Type a session number to resume (e.g. 1), or type your prompt directly:[/dim]\n")
 
 
 def render_markdown(content: str) -> None:
