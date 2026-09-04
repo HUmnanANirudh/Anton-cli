@@ -21,12 +21,15 @@ class Settings(BaseSettings):
     DATA_DIR: Path = Field(default_factory=lambda: Path.cwd() / "data")
     CHROMA_PERSIST_DIR: str = "data/chroma"
 
-    # Groq API Configuration
+    # Groq API Configuration (Primary LLM & Multi-Agent Evaluations)
     GROQ_API_KEY: Optional[str] = Field(default=None, validation_alias="GROQ_API_KEY")
     GROQ_MODEL: str = Field(default="llama-3.3-70b-versatile", validation_alias="GROQ_MODEL")
     GROQ_EVAL_MODEL: str = Field(default="llama-3.3-70b-versatile", validation_alias="GROQ_EVAL_MODEL")
 
-    # Google Custom Search API Configuration
+    # Tavily Search API Configuration (Primary Web Search)
+    TAVILY_API_KEY: Optional[str] = Field(default=None, validation_alias="TAVILY_API_KEY")
+
+    # Google Custom Search API Configuration (Secondary / Fallback)
     GOOGLE_API_KEY: Optional[str] = Field(default=None, validation_alias="GOOGLE_API_KEY")
     GOOGLE_CSE_ID: Optional[str] = Field(default=None, validation_alias="GOOGLE_CSE_ID")
 
