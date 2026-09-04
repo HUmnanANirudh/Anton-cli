@@ -6,6 +6,7 @@ from prompt_toolkit.styles import Style
 
 SLASH_COMMANDS = {
     "/help": "Show all available slash commands & guide",
+    "/model": "Switch or list supported Groq models (/model <num/id>)",
     "/new": "Start a fresh new conversation session",
     "/sessions": "List & resume previous conversations (/session <num>)",
     "/index": "Index current workspace into ChromaDB vector store",
@@ -19,17 +20,11 @@ SLASH_COMMANDS = {
     "/quit": "Exit Anton CLI session",
 }
 
-# Sleek modern theme for Prompt Toolkit (Gemini / Catppuccin inspired)
+# Clean modern theme for Prompt Toolkit (all-white prompt, sleek completion menu)
 CLI_STYLE = Style.from_dict(
     {
-        # Prompt styling
-        "prompt.chevron": "bold #38bdf8",
-        "prompt.star": "bold #38bdf8",
-        "prompt.name": "bold #60a5fa",
-        "prompt.dir": "#94a3b8",
-        "prompt.model": "#34d399",
-        "prompt.branch": "#f59e0b",
-        "prompt.arrow": "bold #38bdf8",
+        # Prompt styling (clean white / subtle cyan)
+        "prompt.chevron": "bold #ffffff",
         # Dropdown Completion Menu
         "completion-menu": "bg:#1e1e2e #cdd6f4",
         "completion-menu.completion": "bg:#181825 #cdd6f4",
@@ -40,12 +35,6 @@ CLI_STYLE = Style.from_dict(
         # Scrollbar
         "scrollbar.background": "bg:#181825",
         "scrollbar.button": "bg:#38bdf8",
-        # Bottom Toolbar
-        "bottom-toolbar": "bg:#0f172a #94a3b8",
-        "bottom-toolbar.badge": "bold bg:#1e293b #38bdf8",
-        "bottom-toolbar.model": "bold bg:#1e293b #34d399",
-        "bottom-toolbar.key": "bold bg:#1e293b #e2e8f0",
-        "bottom-toolbar.text": "#64748b",
     }
 )
 

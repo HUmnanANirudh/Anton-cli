@@ -1,4 +1,4 @@
-"""Rich terminal UI renderer with Gemini CLI aesthetic and session manager for Anton."""
+"""Rich terminal UI renderer with all-white Gemini logo and model selector for Anton."""
 
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -12,58 +12,25 @@ from rich.table import Table
 from rich.text import Text
 from ai_cli.config.settings import get_settings
 from ai_cli.memory.sessions import SessionInfo
+from ai_cli.providers.groq import SUPPORTED_GROQ_MODELS
 
 console = Console()
 
 
 def render_banner(sessions: Optional[List[SessionInfo]] = None) -> None:
-    """Render the Gemini CLI pixel-art logo, getting started tips, and recent sessions."""
+    """Render the all-white Gemini-style pixel-art logo (> ANTON), tips, and recent sessions."""
     settings = get_settings()
 
-    # 1. Pixel Art Logo (> ANTON) with gradient colors
-    logo_segments = [
-        ("  █  ", "bold #38bdf8"),
-        ("  ▄█████▄   ", "#38bdf8"),
-        ("███▄   ██  ", "#60a5fa"),
-        ("█████████   ", "#818cf8"),
-        ("▄██████▄   ", "#a855f7"),
-        ("███▄   ██ \n", "#ec4899"),
+    # 1. Pixel Art Logo (> ANTON) in pure clean white
+    logo_ascii = """
+  █    ▄█████▄   ███▄   ██  █████████   ▄██████▄   ███▄   ██ 
+ ▄██  ███   ███  ████▄  ██     ███     ███    ███  ████▄  ██ 
+▀███  █████████  ██ ███ ██     ███     ███    ███  ██ ███ ██ 
+ ▀██  ███   ███  ██  ▀████     ███     ███    ███  ██  ▀████ 
+  ▀   ███   ███  ██    ███     ███      ▀██████▀   ██    ███ 
+"""
 
-        (" ▄██ ", "bold #38bdf8"),
-        (" ███   ███  ", "#38bdf8"),
-        ("████▄  ██     ", "#60a5fa"),
-        ("███     ", "#818cf8"),
-        ("███    ███  ", "#a855f7"),
-        ("████▄  ██ \n", "#ec4899"),
-
-        ("▀███ ", "bold #38bdf8"),
-        (" █████████  ", "#38bdf8"),
-        ("██ ███ ██     ", "#60a5fa"),
-        ("███     ", "#818cf8"),
-        ("███    ███  ", "#a855f7"),
-        ("██ ███ ██ \n", "#ec4899"),
-
-        (" ▀██ ", "bold #38bdf8"),
-        (" ███   ███  ", "#38bdf8"),
-        ("██  ▀████     ", "#60a5fa"),
-        ("███     ", "#818cf8"),
-        ("███    ███  ", "#a855f7"),
-        ("██  ▀████ \n", "#ec4899"),
-
-        ("  ▀  ", "bold #38bdf8"),
-        (" ███   ███  ", "#38bdf8"),
-        ("██    ███     ", "#60a5fa"),
-        ("███      ", "#818cf8"),
-        ("▀██████▀   ", "#a855f7"),
-        ("██    ███ \n", "#ec4899"),
-    ]
-
-    logo_text = Text()
-    for text, style in logo_segments:
-        logo_text.append(text, style=style)
-
-    console.print()
-    console.print(logo_text)
+    console.print(f"[bold white]{logo_ascii}[/bold white]")
 
     # 2. Tips for getting started (matching Gemini CLI format)
     tips_text = Text()
@@ -71,22 +38,24 @@ def render_banner(sessions: Optional[List[SessionInfo]] = None) -> None:
     tips_text.append("1. Ask questions, edit files, or run commands.\n", style="dim")
     tips_text.append("2. Be specific for the best results.\n", style="dim")
     tips_text.append("3. Type ", style="dim")
-    tips_text.append("/", style="bold cyan")
+    tips_text.append("/", style="bold white")
     tips_text.append(" for slash commands (", style="dim")
-    tips_text.append("/help", style="bold cyan")
+    tips_text.append("/help", style="bold white")
     tips_text.append(", ", style="dim")
-    tips_text.append("/index", style="bold cyan")
+    tips_text.append("/model", style="bold white")
     tips_text.append(", ", style="dim")
-    tips_text.append("/search", style="bold cyan")
+    tips_text.append("/index", style="bold white")
     tips_text.append(", ", style="dim")
-    tips_text.append("/eval", style="bold cyan")
+    tips_text.append("/search", style="bold white")
+    tips_text.append(", ", style="dim")
+    tips_text.append("/eval", style="bold white")
     tips_text.append(").\n", style="dim")
 
     console.print(tips_text)
 
     # 3. Previous Sessions List (if any exist)
     if sessions:
-        sessions_header = Text("Previous Conversations:\n", style="bold #a855f7")
+        sessions_header = Text("Previous Conversations:\n", style="bold white")
         console.print(sessions_header)
         for i, s in enumerate(sessions[:5], 1):
             s_line = Text()
@@ -100,7 +69,34 @@ def render_banner(sessions: Optional[List[SessionInfo]] = None) -> None:
         new_line.append("✦ Start a New Conversation ", style="bold green")
         new_line.append("(Default - press Enter or type your prompt)\n", style="dim")
         console.print(new_line)
-        console.print("[dim]Type a session number to resume (e.g. 1), or type your prompt directly:[/dim]\n")
+
+
+def render_models_table(current_model: str, models: Optional[List[Dict[str, str]]] = None) -> None:
+    """Render a clean table of available Groq models with switch commands."""
+    model_list = models or SUPPORTED_GROQ_MODELS
+    table = Table(title="✦ Supported Groq Models", box=ROUNDED)
+    table.add_column("#", style="bold cyan", width=4)
+    table.add_column("Model ID", style="bold white")
+    table.add_column("Name", style="dim")
+    table.add_column("Speed", justify="center", style="green")
+    table.add_column("Context", justify="center", style="dim")
+    table.add_column("Status", justify="center")
+
+    for i, m in enumerate(model_list, 1):
+        m_id = m["id"]
+        is_active = m_id == current_model
+        status = "[bold green]ACTIVE[/bold green]" if is_active else f"[dim]{m.get('type', '')}[/dim]"
+        table.add_row(
+            f"[{i}]",
+            f"[bold cyan]{m_id}[/bold cyan]" if is_active else m_id,
+            m.get("name", m_id),
+            m.get("speed", "-"),
+            m.get("context", "131k"),
+            status,
+        )
+
+    console.print(table)
+    console.print("[dim]Type [/dim][bold white]/model <number or ID>[/bold white][dim] to switch models (e.g. [/dim][bold cyan]/model 2[/bold cyan][dim] or [/dim][bold cyan]/model openai/gpt-oss-120b[/bold cyan][dim]).[/dim]\n")
 
 
 def render_markdown(content: str) -> None:
@@ -113,7 +109,7 @@ def render_markdown(content: str) -> None:
 def render_tool_call(name: str, args: Dict[str, Any]) -> None:
     """Render visual notification when a tool is invoked."""
     summary = ", ".join(f"{k}={repr(v)[:40]}" for k, v in args.items())
-    console.print(f"[dim]⚙ [bold bright_cyan]{name}[/bold bright_cyan] [dim]({summary})[/dim][/dim]")
+    console.print(f"[dim]⚙ [bold white]{name}[/bold white] [dim]({summary})[/dim][/dim]")
 
 
 def render_diff(diff_content: str, title: str = "Proposed File Changes") -> None:
@@ -135,6 +131,7 @@ def render_doctor_report(
     chroma_ok: bool,
     file_count: int,
     total_chunks: int,
+    current_model: str,
 ) -> None:
     """Render system diagnostics check in a table."""
     table = Table(title="✦ Anton Diagnostic Health Check", box=ROUNDED)
@@ -145,12 +142,12 @@ def render_doctor_report(
     table.add_row(
         "Groq LLM Engine",
         "[bold green]READY[/bold green]" if groq_ok else "[bold yellow]NOT CONFIGURED[/bold yellow]",
-        "Set GROQ_API_KEY in .env" if not groq_ok else "llama-3.3-70b-versatile active",
+        f"Active Model: {current_model}" if groq_ok else "Set GROQ_API_KEY in .env",
     )
     table.add_row(
         "Tavily Search API",
         "[bold green]READY[/bold green]" if tavily_ok else "[bold yellow]NOT CONFIGURED[/bold yellow]",
-        "Set TAVILY_API_KEY in .env for web search" if not tavily_ok else "Live web retrieval enabled",
+        "Live web retrieval enabled" if tavily_ok else "Set TAVILY_API_KEY in .env for web search",
     )
     table.add_row(
         "ChromaDB Vector Store",
