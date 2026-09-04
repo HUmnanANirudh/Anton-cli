@@ -18,25 +18,27 @@ console = Console()
 
 
 def render_banner(sessions: Optional[List[SessionInfo]] = None) -> None:
-    """Render the all-white Gemini-style pixel-art logo (> ANTON), tips, and recent sessions."""
+    """Render the circuit-style pixel logo (ANTON + AI coding agent), tips, and recent sessions."""
     settings = get_settings()
 
-    # 1. Pixel Art Logo (> ANTON) in pure clean white
+    # 1. Circuit-Style Pixel Art Logo matching user reference
     logo_ascii = """
-  █    ▄█████▄   ███▄   ██  █████████   ▄██████▄   ███▄   ██ 
- ▄██  ███   ███  ████▄  ██     ███     ███    ███  ████▄  ██ 
-▀███  █████████  ██ ███ ██     ███     ███    ███  ██ ███ ██ 
- ▀██  ███   ███  ██  ▀████     ███     ███    ███  ██  ▀████ 
-  ▀   ███   ███  ██    ███     ███      ▀██████▀   ██    ███ 
+  ╔══════╗  ╔═══╗  ╔═══╗  ╔══════════╗  ╔══════════╗  ╔═══╗  ╔═══╗
+  ║ ▄██▄ ║  ║ █ ║  ║ █ ║  ╚═══║ ██ ║═╝  ║ ▄████▄ ║  ║ █ ║  ║ █ ║
+  ║ █  █ ║  ║ █ ╚══╝ █ ║      ║ ██ ║    ║ █    █ ║  ║ █ ╚══╝ █ ║
+  ║ ████ ║  ║ █ ╔══╗ █ ║      ║ ██ ║    ║ █    █ ║  ║ █ ╔══╗ █ ║
+  ║ █  █ ║  ║ █ ║  ║ █ ║      ║ ██ ║    ║ ▀████▀ ║  ║ █ ║  ║ █ ║
+  ╚═╝  ╚═╝  ╚═══╝  ╚═══╝      ╚════╝    ╚════════╝  ╚═══╝  ╚═══╝
+                      AI coding agent
 """
 
     console.print(f"[bold white]{logo_ascii}[/bold white]")
 
-    # 2. Tips for getting started (matching Gemini CLI format)
+    # 2. Clean Tips for getting started
     tips_text = Text()
     tips_text.append("Tips for getting started:\n", style="bold white")
-    tips_text.append("1. Ask questions, edit files, or run commands.\n", style="dim")
-    tips_text.append("2. Be specific for the best results.\n", style="dim")
+    tips_text.append("1. Ask questions, edit files, navigate directories, or run commands.\n", style="dim")
+    tips_text.append("2. Anton searches the web and inspects code autonomously when needed.\n", style="dim")
     tips_text.append("3. Type ", style="dim")
     tips_text.append("/", style="bold white")
     tips_text.append(" for slash commands (", style="dim")
@@ -44,11 +46,9 @@ def render_banner(sessions: Optional[List[SessionInfo]] = None) -> None:
     tips_text.append(", ", style="dim")
     tips_text.append("/model", style="bold white")
     tips_text.append(", ", style="dim")
-    tips_text.append("/index", style="bold white")
+    tips_text.append("/sessions", style="bold white")
     tips_text.append(", ", style="dim")
-    tips_text.append("/search", style="bold white")
-    tips_text.append(", ", style="dim")
-    tips_text.append("/eval", style="bold white")
+    tips_text.append("/delete", style="bold white")
     tips_text.append(").\n", style="dim")
 
     console.print(tips_text)
@@ -69,6 +69,12 @@ def render_banner(sessions: Optional[List[SessionInfo]] = None) -> None:
         new_line.append("✦ Start a New Conversation ", style="bold green")
         new_line.append("(Default - press Enter or type your prompt)\n", style="dim")
         console.print(new_line)
+
+
+def render_collapsed_banner(current_model: str, session_title: Optional[str] = None) -> None:
+    """Render sleek, collapsed single-line banner header for ongoing conversation."""
+    title_part = f" • \"{session_title}\"" if session_title and session_title != "New Conversation" else ""
+    console.print(f"[bold white]✦ ANTON[/bold white] [dim]AI coding agent[/dim] [dim]({current_model}){title_part}[/dim]\n")
 
 
 def render_models_table(current_model: str, models: Optional[List[Dict[str, str]]] = None) -> None:

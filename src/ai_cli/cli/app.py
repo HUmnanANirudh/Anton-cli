@@ -14,6 +14,7 @@ from ai_cli.cli.renderer import (
     console,
     extract_thoughts_and_response,
     render_banner,
+    render_collapsed_banner,
     render_diff,
     render_doctor_report,
     render_error,
@@ -97,8 +98,7 @@ async def handle_slash_command(command_str: str, ctx: ReplContext) -> bool:
 
     if cmd == "/clear":
         os.system("clear" if os.name != "nt" else "cls")
-        sessions = ctx.session_mgr.list_sessions()
-        render_banner(sessions)
+        render_collapsed_banner(ctx.current_model, ctx.session_title)
         return True
 
     if cmd in ["/model", "/models"]:
