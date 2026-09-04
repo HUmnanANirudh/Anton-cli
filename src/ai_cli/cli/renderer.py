@@ -21,15 +21,16 @@ def render_banner(sessions: Optional[List[SessionInfo]] = None) -> None:
     """Render the circuit-style pixel logo (ANTON + AI coding agent), tips, and recent sessions."""
     settings = get_settings()
 
-    # 1. Circuit-Style Pixel Art Logo matching user reference
+    # 1. Official ASCII Art Logo (> ANTON + AI coding agent)
     logo_ascii = """
-  ╔══════╗  ╔═══╗  ╔═══╗  ╔══════════╗  ╔══════════╗  ╔═══╗  ╔═══╗
-  ║ ▄██▄ ║  ║ █ ║  ║ █ ║  ╚═══║ ██ ║═╝  ║ ▄████▄ ║  ║ █ ║  ║ █ ║
-  ║ █  █ ║  ║ █ ╚══╝ █ ║      ║ ██ ║    ║ █    █ ║  ║ █ ╚══╝ █ ║
-  ║ ████ ║  ║ █ ╔══╗ █ ║      ║ ██ ║    ║ █    █ ║  ║ █ ╔══╗ █ ║
-  ║ █  █ ║  ║ █ ║  ║ █ ║      ║ ██ ║    ║ ▀████▀ ║  ║ █ ║  ║ █ ║
-  ╚═╝  ╚═╝  ╚═══╝  ╚═══╝      ╚════╝    ╚════════╝  ╚═══╝  ╚═══╝
-                      AI coding agent
+     █████╗ ███╗   ██╗████████╗ ██████╗ ███╗   ██╗
+    ██╔══██╗████╗  ██║╚══██╔══╝██╔═══██╗████╗  ██║
+    ███████║██╔██╗ ██║   ██║   ██║   ██║██╔██╗ ██║
+    ██╔══██║██║╚██╗██║   ██║   ██║   ██║██║╚██╗██║
+    ██║  ██║██║ ╚████║   ██║   ╚██████╔╝██║ ╚████║
+    ╚═╝  ╚═╝╚═╝  ╚═══╝   ╚═╝    ╚═════╝ ╚═╝  ╚═══╝
+
+    AI coding agent
 """
 
     console.print(f"[bold white]{logo_ascii}[/bold white]")
