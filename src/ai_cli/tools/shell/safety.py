@@ -13,9 +13,9 @@ class RiskLevel(str, Enum):
 
 # Catastrophic patterns that are strictly blocked from execution
 BLOCKED_PATTERNS: List[Tuple[str, str]] = [
-    (r"\brm\s+-[rR]f\s+/\b", "Recursive deletion of root filesystem"),
-    (r"\brm\s+-[rR]f\s+~", "Recursive deletion of user home directory"),
-    (r"\bmkfs\b", "Disk formatting command"),
+    (r"\brm\s+-[a-zA-Z]*[rR][a-zA-Z]*\s+(?:--no-preserve-root\s+)?/(?:\s|$|\*)", "Recursive deletion of root filesystem"),
+    (r"\brm\s+-[a-zA-Z]*[rR][a-zA-Z]*\s+~", "Recursive deletion of user home directory"),
+    (r"\bmkfs(\.[a-zA-Z0-9]+)?\b", "Disk formatting command"),
     (r"\bdd\s+if=.*\sof=/dev/[sh]d", "Raw disk overwriting"),
     (r":\(\)\s*\{\s*:\s*\|\s*:\s*&\s*\}\s*;\s*:", "Fork bomb detected"),
     (r">\s*/dev/sd[a-z]", "Direct disk overwrite"),
