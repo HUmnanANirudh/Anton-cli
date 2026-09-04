@@ -118,3 +118,33 @@ async def test_handle_slash_commands():
         cont_update = await handle_slash_command("/update", ctx)
         assert cont_update is True
         mock_up.assert_called_once()
+
+
+from ai_cli.cli.renderer import (
+    extract_thoughts_and_response,
+    render_response_box,
+    render_thinking,
+    render_tool_call,
+    render_user_input,
+)
+
+def test_boxed_renderers_and_thought_extraction():
+    """Verify <think> tag parsing and boxed UI rendering functions."""
+    # Test thinking tag extraction
+    sample_llm_output = "<think>Planning to inspect files\nChecking directory</think>Here is the answer."
+    thoughts, response = extract_thoughts_and_response(sample_llm_output)
+    assert thoughts == "Planning to inspect files\nChecking directory"
+    assert response == "Here is the answer."
+
+    # Test output without thinking tags
+    no_think = "Direct answer without thinking tags."
+    t2, r2 = extract_thoughts_and_response(no_think)
+    assert t2 is None
+    assert r2 == no_think
+
+    # Verify render functions execute without error
+    render_user_input("what is the current directory?")
+    render_thinking("Checking filesystem environment...")
+    render_tool_call("get_current_directory_tool", {}, result="/home/user")
+    render_response_box("You are currently in /home/user", model_name="openai/gpt-oss-20b")
+

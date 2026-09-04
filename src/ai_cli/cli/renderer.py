@@ -1,7 +1,7 @@
 """Rich terminal UI renderer with all-white Gemini logo and model selector for Anton."""
 
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 from rich.align import Align
 from rich.box import DOUBLE_EDGE, HEAVY, ROUNDED, SIMPLE
 from rich.console import Console
@@ -99,17 +99,103 @@ def render_models_table(current_model: str, models: Optional[List[Dict[str, str]
     console.print("[dim]Type [/dim][bold white]/model <number or ID>[/bold white][dim] to switch models (e.g. [/dim][bold cyan]/model 2[/bold cyan][dim] or [/dim][bold cyan]/model openai/gpt-oss-120b[/bold cyan][dim]).[/dim]\n")
 
 
+import re
+
+def extract_thoughts_and_response(content: str) -> Tuple[Optional[str], str]:
+    """
+    Extract <think>...</think> or reasoning tags from model content.
+    Returns (thoughts, final_response).
+    """
+    if not content:
+        return (None, "")
+    think_pattern = re.compile(r"<think>(.*?)</think>", re.DOTALL | re.IGNORECASE)
+    match = think_pattern.search(content)
+    if match:
+        thoughts = match.group(1).strip()
+        response = think_pattern.sub("", content).strip()
+        return (thoughts if thoughts else None, response)
+    return (None, content.strip())
+
+
+def render_user_input(content: str) -> None:
+    """Render user query inside a sleek rounded box."""
+    console.print()
+    console.print(
+        Panel(
+            Text(content, style="bold white"),
+            title="[bold cyan]✦ User[/bold cyan]",
+            title_align="left",
+            border_style="dim cyan",
+            box=ROUNDED,
+            padding=(0, 1),
+        )
+    )
+
+
+def render_thinking(thoughts: str) -> None:
+    """Render model reasoning/thinking process in a specialized yellow/dim box."""
+    if not thoughts or not thoughts.strip():
+        return
+    console.print()
+    console.print(
+        Panel(
+            Text(thoughts.strip(), style="italic #e2e8f0"),
+            title="[bold yellow]✦ Thinking & Reasoning[/bold yellow]",
+            title_align="left",
+            border_style="yellow",
+            box=ROUNDED,
+            padding=(0, 1),
+        )
+    )
+
+
+def render_tool_call(name: str, args: Optional[Dict[str, Any]] = None, result: Optional[str] = None) -> None:
+    """Render visual notification when a tool is invoked or returns a result."""
+    body = Text()
+    body.append("⚙ Action: ", style="bold cyan")
+    body.append(f"{name}\n", style="bold white")
+    if args:
+        summary = ", ".join(f"{k}={repr(v)[:80]}" for k, v in args.items())
+        body.append("Arguments: ", style="dim")
+        body.append(f"{summary}\n", style="dim")
+    if result:
+        preview = result[:250] + ("..." if len(result) > 250 else "")
+        body.append("Result: ", style="dim green")
+        body.append(f"{preview}", style="dim")
+
+    console.print(
+        Panel(
+            body,
+            title="[bold cyan]⚙ Tool Execution[/bold cyan]",
+            title_align="left",
+            border_style="dim cyan",
+            box=ROUNDED,
+            padding=(0, 1),
+        )
+    )
+
+
+def render_response_box(content: str, model_name: str = "Anton") -> None:
+    """Render the AI response in a clean, prominent rounded white box."""
+    if not content.strip():
+        return
+    console.print()
+    console.print(
+        Panel(
+            Markdown(content.strip()),
+            title=f"[bold white]✦ Anton[/bold white] [dim]({model_name})[/dim]",
+            title_align="left",
+            border_style="bold white",
+            box=ROUNDED,
+            padding=(1, 2),
+        )
+    )
+    console.print()
+
+
 def render_markdown(content: str) -> None:
-    """Render markdown response to terminal."""
-    console.print()
-    console.print(Markdown(content))
-    console.print()
-
-
-def render_tool_call(name: str, args: Dict[str, Any]) -> None:
-    """Render visual notification when a tool is invoked."""
-    summary = ", ".join(f"{k}={repr(v)[:40]}" for k, v in args.items())
-    console.print(f"[dim]⚙ [bold white]{name}[/bold white] [dim]({summary})[/dim][/dim]")
+    """Render markdown response to terminal inside response box."""
+    render_response_box(content)
 
 
 def render_diff(diff_content: str, title: str = "Proposed File Changes") -> None:

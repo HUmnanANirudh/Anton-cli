@@ -12,6 +12,7 @@ from prompt_toolkit.shortcuts import CompleteStyle
 from ai_cli.agent.graph import create_agent_graph
 from ai_cli.cli.renderer import (
     console,
+    extract_thoughts_and_response,
     render_banner,
     render_diff,
     render_doctor_report,
@@ -19,7 +20,10 @@ from ai_cli.cli.renderer import (
     render_eval_summary,
     render_markdown,
     render_models_table,
+    render_response_box,
+    render_thinking,
     render_tool_call,
+    render_user_input,
 )
 from ai_cli.cli.suggestions import CLI_STYLE, SLASH_COMMANDS, SlashCommandCompleter
 from ai_cli.cli.updater import update_anton
@@ -400,22 +404,67 @@ async def run_interactive_session(model_name: Optional[str] = None) -> None:
                 config = {"configurable": {"thread_id": ctx.session_id}}
                 ctx.messages.append(HumanMessage(content=clean_input))
 
-                with console.status(f"[bold cyan]✦ Thinking ({ctx.current_model})...[/bold cyan]", spinner="dots"):
-                    state = {
-                        "messages": ctx.messages,
-                        "workspace_path": ctx.workspace_path,
-                        "pending_tool_call": None,
-                        "approval_granted": None,
-                        "input_sanitized": False,
-                        "guardrail_flagged": False,
-                        "guardrail_reasons": [],
-                        "retrieved_context": None,
-                    }
-                    result_state = await ctx.agent.ainvoke(state, config=config)
+                # Render user input in styled box
+                render_user_input(clean_input)
 
-                ctx.messages = result_state.get("messages", ctx.messages)
+                state = {
+                    "messages": ctx.messages,
+                    "workspace_path": ctx.workspace_path,
+                    "pending_tool_call": None,
+                    "approval_granted": None,
+                    "input_sanitized": False,
+                    "guardrail_flagged": False,
+                    "guardrail_reasons": [],
+                    "retrieved_context": None,
+                }
+
+                displayed_thoughts = set()
+
+                try:
+                    with console.status(f"[bold cyan]✦ Thinking ({ctx.current_model})...[/bold cyan]", spinner="dots") as status:
+                        async for event in ctx.agent.astream(state, config=config, stream_mode="updates"):
+                            for node_name, node_output in event.items():
+                                if node_name == "reasoning":
+                                    msgs = node_output.get("messages", [])
+                                    for msg in msgs:
+                                        if getattr(msg, "tool_calls", None):
+                                            for call in msg.tool_calls:
+                                                status.stop()
+                                                render_tool_call(call["name"], call.get("args", {}))
+                                                status.start()
+                                        raw_content = str(getattr(msg, "content", "") or "")
+                                        reasoning_content = msg.additional_kwargs.get("reasoning_content") if hasattr(msg, "additional_kwargs") and msg.additional_kwargs else ""
+                                        thoughts, _ = extract_thoughts_and_response(raw_content)
+                                        all_thoughts = ((thoughts or "") + ("\n" + str(reasoning_content) if reasoning_content else "")).strip()
+                                        if all_thoughts and all_thoughts not in displayed_thoughts:
+                                            displayed_thoughts.add(all_thoughts)
+                                            status.stop()
+                                            render_thinking(all_thoughts)
+                                            status.start()
+                                elif node_name == "tools":
+                                    msgs = node_output.get("messages", [])
+                                    for msg in msgs:
+                                        status.stop()
+                                        render_tool_call("Tool Result", result=str(msg.content))
+                                        status.start()
+
+                    state_snapshot = await ctx.agent.aget_state(config)
+                    if state_snapshot and state_snapshot.values and "messages" in state_snapshot.values:
+                        ctx.messages = state_snapshot.values["messages"]
+
+                except Exception:
+                    with console.status(f"[bold cyan]✦ Thinking ({ctx.current_model})...[/bold cyan]", spinner="dots"):
+                        result_state = await ctx.agent.ainvoke(state, config=config)
+                        ctx.messages = result_state.get("messages", ctx.messages)
+
                 last_msg = ctx.messages[-1]
-                render_markdown(str(last_msg.content))
+                raw_last_content = str(last_msg.content)
+                thoughts, final_response = extract_thoughts_and_response(raw_last_content)
+                if thoughts and thoughts not in displayed_thoughts:
+                    render_thinking(thoughts)
+
+                # Render final AI response in clean box
+                render_response_box(final_response or raw_last_content, model_name=ctx.current_model)
 
                 # Keep workspace_path synced in case agent called change_directory_tool
                 ctx.workspace_path = get_current_working_dir()
