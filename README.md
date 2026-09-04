@@ -16,24 +16,26 @@ This project uses **`uv`** for all package management, virtual environments, and
 
 ### Setup with `uv`
 ```bash
-# 1. Create the project environment and install dependencies 
-uv sync 
+# 1. Create a virtual environment and install dependencies with uv
+uv venv
+uv pip install -e ".[dev]"
 
-# 2. Install development dependencies
-uv sync --extra dev 
+# 2. Set environment variables
+cp .env.example .env
+# Edit .env with your GROQ_API_KEY and TAVILY_API_KEY
 
-# 3. Set environment variables
-cp .env.example .env 
+# 3. Enable global 'anton' command anywhere in terminal
+./install.sh
 
-# 4. Edit .env and add your API keys 
-GROQ_API_KEY=... 
-TAVILY_API_KEY=...
-
-# 5. Run Anton CLI
-uv run anton
+# 4. Run Anton CLI from anywhere!
+anton
 ```
 
-### Running Tests with `uv`
+### Running Scripts & Tests
 ```bash
+# Direct launcher script
+./anton.sh
+
+# Running tests with uv
 uv run pytest
 ```
