@@ -1,21 +1,27 @@
-"""Interactive REPL application loop for Anton CLI."""
+"""Interactive REPL application loop with Gemini CLI aesthetic for Anton."""
 
 import asyncio
 import os
 import sys
 from pathlib import Path
+from typing import List, Tuple
 from langchain_core.messages import HumanMessage
 from prompt_toolkit import PromptSession
+from prompt_toolkit.formatted_text import FormattedText
 from prompt_toolkit.history import InMemoryHistory
+from prompt_toolkit.shortcuts import CompleteStyle
 from ai_cli.agent.graph import create_agent_graph
 from ai_cli.cli.renderer import (
     console,
     render_banner,
+    render_diff,
+    render_doctor_report,
     render_error,
     render_eval_summary,
     render_markdown,
+    render_tool_call,
 )
-from ai_cli.cli.suggestions import SLASH_COMMANDS, SlashCommandCompleter
+from ai_cli.cli.suggestions import CLI_STYLE, SLASH_COMMANDS, SlashCommandCompleter
 from ai_cli.cli.updater import update_anton
 from ai_cli.config.settings import get_settings
 from ai_cli.evaluations.benchmark import BenchmarkRunner
@@ -24,6 +30,47 @@ from ai_cli.memory.embeddings import get_embeddings
 from ai_cli.memory.indexer import CodeIndexer
 from ai_cli.memory.retriever import CodeRetriever
 from ai_cli.tools.web.search import search_web
+
+
+def get_short_path() -> str:
+    """Get concise representation of current directory."""
+    cwd = Path.cwd()
+    home = Path.home()
+    try:
+        rel = cwd.relative_to(home)
+        return f"~/{rel}"
+    except ValueError:
+        return str(cwd)
+
+
+def get_prompt_tokens() -> List[Tuple[str, str]]:
+    """Build formatted multi-part prompt for Prompt Toolkit."""
+    dir_name = get_short_path()
+    return [
+        ("class:prompt.star", "✦ "),
+        ("class:prompt.name", "Anton "),
+        ("class:prompt.dir", f"[{dir_name}] "),
+        ("class:prompt.arrow", "❯ "),
+    ]
+
+
+def get_bottom_toolbar() -> FormattedText:
+    """Build bottom toolbar displaying status and shortcuts."""
+    settings = get_settings()
+    model_name = settings.GROQ_MODEL.split("-")[0] + "-70b" if "70b" in settings.GROQ_MODEL else settings.GROQ_MODEL
+    
+    return FormattedText([
+        ("class:bottom-toolbar.badge", " ✦ Anton "),
+        ("class:bottom-toolbar.text", " | Model: "),
+        ("class:bottom-toolbar.model", f"{model_name} "),
+        ("class:bottom-toolbar.text", "| Type "),
+        ("class:bottom-toolbar.key", " / "),
+        ("class:bottom-toolbar.text", "for commands | "),
+        ("class:bottom-toolbar.key", " Tab "),
+        ("class:bottom-toolbar.text", "complete | "),
+        ("class:bottom-toolbar.key", " Ctrl+C "),
+        ("class:bottom-toolbar.text", "exit "),
+    ])
 
 
 async def handle_slash_command(command_str: str) -> bool:
@@ -36,7 +83,7 @@ async def handle_slash_command(command_str: str) -> bool:
     arg = parts[1] if len(parts) > 1 else ""
 
     if cmd in ["/exit", "/quit"]:
-        console.print("[cyan]Goodbye![/cyan]")
+        console.print("[cyan]✦ Goodbye![/cyan]")
         return False
 
     if cmd == "/clear":
@@ -45,10 +92,29 @@ async def handle_slash_command(command_str: str) -> bool:
         return True
 
     if cmd == "/help":
-        console.print("\n[bold cyan]Available Slash Commands:[/bold cyan]")
+        console.print("\n[bold cyan]✦ Available Slash Commands:[/bold cyan]\n")
+        from rich.table import Table
+        table = Table(box=None, show_header=False)
+        table.add_column("Command", style="bold bright_cyan", width=14)
+        table.add_column("Description", style="dim")
         for c, desc in SLASH_COMMANDS.items():
-            console.print(f"  [bold green]{c:10s}[/bold green] [dim]{desc}[/dim]")
+            table.add_row(c, desc)
+        console.print(table)
         console.print()
+        return True
+
+    if cmd == "/doctor":
+        settings = get_settings()
+        memory = ChromaMemory()
+        col = memory.get_or_create_collection()
+        hashes = memory.get_file_hashes()
+        render_doctor_report(
+            groq_ok=bool(settings.GROQ_API_KEY),
+            tavily_ok=bool(settings.TAVILY_API_KEY),
+            chroma_ok=True,
+            file_count=len(hashes),
+            total_chunks=col.count(),
+        )
         return True
 
     if cmd == "/index":
@@ -59,7 +125,7 @@ async def handle_slash_command(command_str: str) -> bool:
         indexer = CodeIndexer(chroma_memory=memory, embeddings=embeddings)
         stats = indexer.index_workspace(target)
         console.print(
-            f"[bold green]Indexing Complete![/bold green] "
+            f"[bold green]✓ Indexing Complete![/bold green] "
             f"Indexed: {stats['indexed_files']} files ({stats['total_chunks_added']} chunks), "
             f"Skipped (unchanged): {stats['skipped_files']} files."
         )
@@ -116,26 +182,33 @@ async def handle_slash_command(command_str: str) -> bool:
 
 
 async def run_interactive_session() -> None:
-    """Launch the interactive REPL session."""
+    """Launch the interactive REPL session with Gemini CLI UI."""
     render_banner()
 
-    session = PromptSession(
+    session: PromptSession = PromptSession(
         history=InMemoryHistory(),
         completer=SlashCommandCompleter(),
+        complete_while_typing=True,
+        complete_style=CompleteStyle.COLUMN,
+        style=CLI_STYLE,
+        bottom_toolbar=get_bottom_toolbar,
     )
 
     thread_id = f"session-{os.getpid()}"
     config = {"configurable": {"thread_id": thread_id}}
 
-    try:
-        agent = create_agent_graph()
-    except Exception as e:
-        console.print(f"[yellow]Note: LLM Agent running in offline / simulated mode: {e}[/yellow]")
-        agent = None
+    agent = None
+    settings = get_settings()
+    if settings.GROQ_API_KEY:
+        try:
+            agent = create_agent_graph()
+        except Exception as e:
+            console.print(f"[yellow]Note initializing agent: {e}[/yellow]")
+            agent = None
 
     while True:
         try:
-            user_input = await session.prompt_async("\n❯ ")
+            user_input = await session.prompt_async(get_prompt_tokens)
             clean_input = user_input.strip()
             if not clean_input:
                 continue
@@ -149,7 +222,7 @@ async def run_interactive_session() -> None:
 
             # Execute agent query
             if agent:
-                with console.status("[bold cyan]Anton is thinking...[/bold cyan]", spinner="dots"):
+                with console.status("[bold cyan]✦ Anton is thinking...[/bold cyan]", spinner="dots"):
                     state = {
                         "messages": [HumanMessage(content=clean_input)],
                         "workspace_path": str(Path.cwd()),
@@ -166,11 +239,13 @@ async def run_interactive_session() -> None:
                 render_markdown(str(last_msg.content))
             else:
                 console.print(
-                    "[yellow]Groq API key not configured. Set GROQ_API_KEY in .env to enable full agent reasoning.[/yellow]"
+                    "\n[bold yellow]⚠️ Groq API key is not configured.[/bold yellow]\n"
+                    "Add your [bold]GROQ_API_KEY[/bold] in [bold cyan].env[/bold cyan] or run [bold cyan]/doctor[/bold cyan] for setup instructions.\n"
+                    "You can still use slash commands like [bold cyan]/help[/bold cyan], [bold cyan]/index[/bold cyan], [bold cyan]/search[/bold cyan], and [bold cyan]/vsearch[/bold cyan].\n"
                 )
 
         except (KeyboardInterrupt, EOFError):
-            console.print("\n[dim]Session interrupted. Exiting...[/dim]")
+            console.print("\n[dim]✦ Session ended. Goodbye![/dim]")
             break
         except Exception as e:
             render_error(str(e))
