@@ -12,21 +12,20 @@ Autonomous, high-performance CLI coding and reasoning assistant powered by LangG
 - **Rich Terminal UI**: Syntax highlighting, diff viewing, auto-suggestions, and approval flows.
 
 ## Requirements & Package Management
-This project uses **`uv`** for all package management, virtual environments, and running commands. Do not use raw `pip`.
+This project uses **`uv`** for all package management, virtual environments, and running commands.
 
 ### Setup with `uv`
 ```bash
-# 1. Create a virtual environment with uv
-uv venv
-
-# 2. Install dependencies with uv
-uv pip install -e ".[dev]"
-
+# 1. Create the project environment and install dependencies 
+uv sync 
+# 2. Install development dependencies
+uv sync --extra dev 
 # 3. Set environment variables
-cp .env.example .env
-# Edit .env with your GROQ_API_KEY and TAVILY_API_KEY
-
-# 4. Run Anton CLI with uv
+cp .env.example .env 
+# 4. Edit .env and add your API keys 
+# GROQ_API_KEY=... 
+# TAVILY_API_KEY=...
+# 5. Run Anton CLI
 uv run anton
 ```
 
