@@ -13,7 +13,7 @@ SLASH_COMMANDS = {
     "/new": "Start a fresh new conversation session",
     "/end": "End current conversation session and start fresh",
     "/sessions": "List & resume previous conversations (/session <num>)",
-    "/delete": "Delete a saved conversation (/delete <num>)",
+    "/delete": "Delete sessions (/delete 1 2 3... or /delete all)",
     "/index": "Index current workspace into ChromaDB vector store",
     "/search": "Search the live web via Tavily API (/search query)",
     "/vsearch": "Query local ChromaDB code vector store (/vsearch query)",

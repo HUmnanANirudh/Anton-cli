@@ -149,3 +149,14 @@ class SessionManager:
             except Exception:
                 return False
         return False
+
+    def delete_all_sessions(self) -> int:
+        """Delete all saved session files and return number of deleted sessions."""
+        count = 0
+        for file in self.sessions_dir.glob("*.json"):
+            try:
+                file.unlink()
+                count += 1
+            except Exception:
+                continue
+        return count
