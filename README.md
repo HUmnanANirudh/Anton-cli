@@ -1,49 +1,89 @@
-# Anton (`ai-cli`)
+# Anton
 
-Autonomous, high-performance CLI coding and reasoning assistant powered by LangGraph, Groq API, Tavily / Google Search, and a local ChromaDB vector store.
+```
+ █████╗ ███╗   ██╗████████╗ ██████╗ ███╗   ██╗
+██╔══██╗████╗  ██║╚══██╔══╝██╔═══██╗████╗  ██║
+███████║██╔██╗ ██║   ██║   ██║   ██║██╔██╗ ██║
+██╔══██║██║╚██╗██║   ██║   ██║   ██║██║╚██╗██║
+██║  ██║██║ ╚████║   ██║   ╚██████╔╝██║ ╚████║
+╚═╝  ╚═╝╚═╝  ╚═══╝   ╚═╝    ╚═════╝ ╚═╝  ╚═══╝
+
+AI coding agent
+```
+
+Anton is an AI coding agent for the terminal. It writes code, edits files, runs commands, navigates directories, and searches the web.
 
 ## Features
-- **Ultra-Fast LLM Reasoning**: Powered by Groq (`llama-3.3-70b-versatile`).
-- **Local ChromaDB Vector Search**: Semantic search over project code and documentation with FastEmbed.
-- **Full File & Shell Tooling**: Read, write, smart patch/diff, search, and safe command execution.
-- **Web Search**: Tavily Search integration with Google Custom Search fallback.
-- **Robust Guardrails**: Multi-layer defense against prompt injection, system prompt leakage, and unsafe execution.
-- **Multi-Agent Evaluations**: Automated multi-agent validation (Judge, Safety Auditor, Code Quality Evaluator).
-- **Rich Terminal UI**: Syntax highlighting, diff viewing, auto-suggestions, and approval flows.
-- **Self-Update**: Built-in `--update` command to synchronize and pull the latest release.
 
-## Quick Start & Installation
-This project uses **`uv`** for all package management and running commands.
+- **Models**: Uses `openai/gpt-oss-20b` by default via Groq. You can switch models with `/model`.
+- **System Access**: Anton can read, write, and edit files across your whole system, not just the folder you start it in.
+- **Web Search**: Searches the web when it needs documentation or current information.
+- **Sessions**: Saves conversation history globally in `~/.anton/sessions/`. You can resume sessions from any directory.
+- **Safety Checks**: Blocks unsafe commands before they run and asks for confirmation when needed.
+- **Terminal Interface**: Shows clean input and output boxes with live thinking steps.
 
-### 1. Setup
+## Installation
+
+Anton uses `uv` for package management.
+
+### 1. Install uv
 ```bash
-# 1. Copy and configure API keys
-cp .env.example .env
-# Edit .env with your GROQ_API_KEY and TAVILY_API_KEY
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
 
-# 2. Enable global 'anton' command
+### 2. Install Anton
+```bash
+git clone https://github.com/your-username/Anton.git
+cd Anton
 ./install.sh
 ```
 
-### 2. Usage
+This creates the configuration directory `~/.anton/` and links the `anton` command to `~/.local/bin/anton`.
+
+### 3. Set API Keys
+Add your keys to `~/.anton/.env`:
+```env
+GROQ_API_KEY="gsk_..."
+TAVILY_API_KEY="tvly-..."
+```
+
+## Usage
+
+Start Anton from any directory:
 ```bash
-# Run Anton CLI from anywhere in your terminal
 anton
+```
 
-# Pull latest version & update
+Update to the latest version:
+```bash
 anton --update
+```
 
-# Index your workspace into local vector DB
-anton --index .
-
-# Run the multi-agent evaluation benchmark
-anton --eval
-
-# Show version
+Check version:
+```bash
 anton --version
 ```
 
-### 3. Running Tests
+## Slash Commands
+
+Type `/` in the prompt to see available commands:
+
+| Command | Description | Example |
+| :--- | :--- | :--- |
+| `/help` | Show command list and usage | `/help` |
+| `/model [name]` | View or change the active model | `/model deepseek-r1-distill-llama-70b` |
+| `/sessions` | List saved conversations | `/sessions` |
+| `/resume [id]` | Resume a past conversation | `/resume session_20260904_205900` |
+| `/delete <ids...>` | Delete one or more sessions | `/delete 1 2` |
+| `/delete all` | Delete all saved sessions | `/delete all` |
+| `/end` | End current conversation and start a new one | `/end` |
+| `/exit` or `/quit` | Exit Anton | `/exit` |
+
+You can also type words like `quit` or `exit` directly to leave.
+
+## Development and Testing
+
+Run tests:
 ```bash
 uv run pytest
 ```
