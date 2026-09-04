@@ -57,6 +57,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Run the multi-agent evaluation benchmark suite.",
     )
     parser.add_argument(
+        "--update",
+        action="store_true",
+        help="Check and update Anton CLI to the latest version.",
+    )
+    parser.add_argument(
         "-v",
         "--version",
         action="store_true",
@@ -101,6 +106,10 @@ async def async_main() -> None:
     if args.version:
         print(f"{settings.APP_NAME} v{settings.APP_VERSION}")
         sys.exit(0)
+
+    if args.update:
+        await update_anton()
+        return
 
     if args.eval:
         console.print("[yellow]Running Multi-Agent Evaluation Benchmark Suite on Groq...[/yellow]")

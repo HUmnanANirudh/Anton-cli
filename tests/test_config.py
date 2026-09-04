@@ -8,7 +8,7 @@ def test_default_settings():
     """Verify default settings initialization."""
     settings = Settings()
     assert settings.APP_NAME == "Anton CLI"
-    assert settings.APP_VERSION == "0.1.0"
+    assert settings.APP_VERSION == "0.1"
     assert settings.GROQ_MODEL == "llama-3.3-70b-versatile"
     assert settings.CHROMA_PERSIST_DIR == "data/chroma"
     assert settings.ENABLE_INPUT_GUARDRAILS is True

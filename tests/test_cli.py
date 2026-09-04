@@ -1,6 +1,7 @@
 """Unit tests for CLI components and slash command handling."""
 
 import pytest
+from unittest.mock import AsyncMock, patch
 from prompt_toolkit.document import Document
 from ai_cli.cli.app import handle_slash_command
 from ai_cli.cli.renderer import render_banner
@@ -17,6 +18,7 @@ def test_cli_parser_arguments():
     assert args0.query is None
     assert args0.eval is False
     assert args0.index is None
+    assert args0.update is False
 
     # Query one-shot
     args1 = parser.parse_args(["write a flask app"])
@@ -29,15 +31,18 @@ def test_cli_parser_arguments():
     args3 = parser.parse_args(["--index", "src"])
     assert args3.index == "src"
 
+    args4 = parser.parse_args(["--update"])
+    assert args4.update is True
+
 
 def test_slash_command_completer():
     """Verify autocompletion suggestions for slash commands."""
     completer = SlashCommandCompleter()
-    doc = Document("/se", 3)
+    doc = Document("/up", 3)
     completions = list(completer.get_completions(doc, None))
     
     assert len(completions) == 1
-    assert completions[0].text == "/search"
+    assert completions[0].text == "/update"
 
 
 @pytest.mark.asyncio
@@ -50,3 +55,10 @@ async def test_handle_slash_commands():
     # /exit should return False (exit loop)
     cont_exit = await handle_slash_command("/exit")
     assert cont_exit is False
+
+    # /update should return True
+    with patch("ai_cli.cli.app.update_anton", new_callable=AsyncMock) as mock_up:
+        mock_up.return_value = True
+        cont_update = await handle_slash_command("/update")
+        assert cont_update is True
+        mock_up.assert_called_once()
