@@ -16,10 +16,12 @@ class Settings(BaseSettings):
     APP_VERSION: str = "0.1"
     DEBUG: bool = False
 
-    # Paths
+    # Paths (Persistent global user directory ~/.anton)
+    ANTON_HOME: Path = Field(default_factory=lambda: Path.home() / ".anton")
     BASE_DIR: Path = Field(default_factory=lambda: Path.cwd())
-    DATA_DIR: Path = Field(default_factory=lambda: Path.cwd() / "data")
-    CHROMA_PERSIST_DIR: str = "data/chroma"
+    DATA_DIR: Path = Field(default_factory=lambda: Path.home() / ".anton" / "data")
+    SESSIONS_DIR: Path = Field(default_factory=lambda: Path.home() / ".anton" / "sessions")
+    CHROMA_PERSIST_DIR: str = str(Path.home() / ".anton" / "chroma")
 
     # Groq API Configuration (Primary LLM & Multi-Agent Evaluations)
     GROQ_API_KEY: Optional[str] = Field(default=None, validation_alias="GROQ_API_KEY")
@@ -49,6 +51,7 @@ class Settings(BaseSettings):
 
     model_config = SettingsConfigDict(
         env_file=(
+            str(Path.home() / ".anton" / ".env"),
             str(Path(__file__).resolve().parents[3] / ".env"),
             ".env",
         ),
@@ -61,7 +64,7 @@ class Settings(BaseSettings):
         """Get absolute path for ChromaDB storage directory."""
         path = Path(self.CHROMA_PERSIST_DIR)
         if not path.is_absolute():
-            path = self.BASE_DIR / path
+            path = self.DATA_DIR / path
         return path
 
 

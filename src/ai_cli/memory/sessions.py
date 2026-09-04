@@ -37,9 +37,27 @@ class SessionManager:
         if sessions_dir:
             self.sessions_dir = Path(sessions_dir)
         else:
-            self.sessions_dir = settings.BASE_DIR / "data" / "sessions"
+            self.sessions_dir = settings.SESSIONS_DIR
+            self._migrate_legacy_sessions()
 
         self.sessions_dir.mkdir(parents=True, exist_ok=True)
+
+    def _migrate_legacy_sessions(self) -> None:
+        """Migrate any legacy sessions from local project directories to global ~/.anton/sessions."""
+        settings = get_settings()
+        candidate_dirs = [
+            Path.cwd() / "data" / "sessions",
+            Path(__file__).resolve().parents[3] / "data" / "sessions",
+        ]
+        for legacy_dir in candidate_dirs:
+            if legacy_dir.exists() and legacy_dir.resolve() != self.sessions_dir.resolve():
+                for json_file in legacy_dir.glob("*.json"):
+                    target_file = self.sessions_dir / json_file.name
+                    if not target_file.exists():
+                        try:
+                            target_file.write_bytes(json_file.read_bytes())
+                        except Exception:
+                            pass
 
     def _get_session_file(self, session_id: str) -> Path:
         return self.sessions_dir / f"{session_id}.json"
