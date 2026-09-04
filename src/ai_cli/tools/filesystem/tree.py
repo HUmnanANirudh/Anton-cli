@@ -24,16 +24,16 @@ DEFAULT_IGNORE: Set[str] = {
 }
 
 
+from ai_cli.tools.filesystem.nav import resolve_target_path
+
+
 def build_tree(
     root_dir: Optional[str | Path] = None,
     max_depth: int = 3,
     custom_ignore: Optional[Set[str]] = None,
 ) -> str:
-    """Generate an ASCII visual representation of directory structure."""
-    settings = get_settings()
-    base_path = Path(root_dir) if root_dir else settings.BASE_DIR
-    if not base_path.is_absolute():
-        base_path = settings.BASE_DIR / base_path
+    """Generate an ASCII visual representation of directory structure anywhere on device."""
+    base_path = resolve_target_path(root_dir) if root_dir else Path.cwd().resolve()
 
     if not base_path.exists() or not base_path.is_dir():
         return f"Directory not found: {base_path}"

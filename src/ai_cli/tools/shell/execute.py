@@ -20,15 +20,18 @@ class ShellExecutionResult(BaseModel):
     error: Optional[str] = None
 
 
+from ai_cli.tools.filesystem.nav import resolve_target_path
+
+
 async def execute_shell_command(
     command: str,
     cwd: Optional[str | Path] = None,
     timeout_seconds: Optional[int] = None,
     force_run: bool = False,
 ) -> ShellExecutionResult:
-    """Execute a shell command with security checks and timeout handling."""
+    """Execute a shell command with security checks and timeout handling anywhere on device."""
     settings = get_settings()
-    working_dir = Path(cwd) if cwd else settings.BASE_DIR
+    working_dir = resolve_target_path(cwd) if cwd else Path.cwd().resolve()
     timeout = timeout_seconds or settings.SHELL_TIMEOUT_SECONDS
 
     # Safety check

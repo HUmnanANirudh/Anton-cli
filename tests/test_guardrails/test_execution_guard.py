@@ -9,7 +9,7 @@ from ai_cli.guardrails.execution_guard import (
 
 
 def test_path_boundary_containment():
-    """Verify path traversal prevention outside workspace."""
+    """Verify path validation and optional containment outside workspace."""
     with tempfile.TemporaryDirectory() as tmp_dir:
         root = Path(tmp_dir)
         inside_file = root / "src" / "app.py"
@@ -19,10 +19,14 @@ def test_path_boundary_containment():
         assert res1.is_allowed is True
         assert res1.resolved_path == str(inside_file.resolve())
 
-        # Path traversal escape attempt
-        res2 = validate_path_boundary("../../etc/passwd", base_dir=root)
+        # Path traversal escape attempt when allow_outside=False
+        res2 = validate_path_boundary("../../etc/passwd", base_dir=root, allow_outside=False)
         assert res2.is_allowed is False
         assert "Path traversal blocked" in (res2.error or "")
+
+        # Default full device access allows external paths
+        res3 = validate_path_boundary(tmp_dir)
+        assert res3.is_allowed is True
 
 
 def test_check_approval_policy():

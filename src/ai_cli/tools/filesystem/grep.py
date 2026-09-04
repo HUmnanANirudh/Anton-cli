@@ -26,6 +26,9 @@ class GrepResult(BaseModel):
     error: Optional[str] = None
 
 
+from ai_cli.tools.filesystem.nav import resolve_target_path
+
+
 def grep_codebase(
     query: str,
     root_dir: Optional[str | Path] = None,
@@ -33,11 +36,8 @@ def grep_codebase(
     case_sensitive: bool = False,
     max_matches: int = 50,
 ) -> GrepResult:
-    """Search for string or regex pattern across workspace files."""
-    settings = get_settings()
-    base_path = Path(root_dir) if root_dir else settings.BASE_DIR
-    if not base_path.is_absolute():
-        base_path = settings.BASE_DIR / base_path
+    """Search for string or regex pattern across files anywhere on device."""
+    base_path = resolve_target_path(root_dir) if root_dir else Path.cwd().resolve()
 
     flags = 0 if case_sensitive else re.IGNORECASE
     try:

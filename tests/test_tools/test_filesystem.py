@@ -103,3 +103,28 @@ def test_navigation_and_system_context():
     # Restore original working dir
     change_working_dir(original_cwd)
     assert get_current_working_dir() == original_cwd
+
+
+def test_full_device_filesystem_access():
+    """Verify read, write, patch, and tree access across arbitrary device locations."""
+    with tempfile.TemporaryDirectory() as outside_dir:
+        outside_path = Path(outside_dir) / "test_doc.txt"
+
+        # Write outside CWD
+        w_res = write_file(outside_path, "Hello device-wide access!\nSecond line.")
+        assert w_res.created is True
+        assert outside_path.exists()
+
+        # Read outside CWD
+        r_res = read_file(outside_path)
+        assert "Hello device-wide access!" in r_res.content
+
+        # Patch outside CWD
+        p_res = patch_file(outside_path, "Hello device-wide access!", "Hello from anywhere!")
+        assert p_res.success is True
+        assert "Hello from anywhere!" in outside_path.read_text()
+
+        # Tree outside CWD
+        t_res = build_tree(outside_dir)
+        assert "test_doc.txt" in t_res
+

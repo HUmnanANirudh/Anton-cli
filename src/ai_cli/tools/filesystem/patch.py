@@ -30,6 +30,9 @@ def generate_diff(original_text: str, modified_text: str, file_path: str) -> str
     return "".join(diff)
 
 
+from ai_cli.tools.filesystem.nav import resolve_target_path
+
+
 def patch_file(
     file_path: str | Path,
     target_content: str,
@@ -37,13 +40,10 @@ def patch_file(
     allow_multiple: bool = False,
 ) -> PatchResult:
     """
-    Replace a precise block of text (`target_content`) with `replacement_content` in a file.
+    Replace a precise block of text (`target_content`) with `replacement_content` in a file anywhere on device.
     Returns the unified diff preview.
     """
-    settings = get_settings()
-    path = Path(file_path)
-    if not path.is_absolute():
-        path = settings.BASE_DIR / path
+    path = resolve_target_path(file_path)
 
     if not path.exists():
         return PatchResult(

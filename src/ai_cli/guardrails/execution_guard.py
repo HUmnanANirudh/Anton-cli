@@ -24,25 +24,23 @@ class ApprovalRequirement(BaseModel):
     diff_or_command: str
 
 
+from ai_cli.tools.filesystem.nav import resolve_target_path
+
+
 def validate_path_boundary(
     target_path: str | Path,
     base_dir: Optional[Path] = None,
-    allow_outside: bool = False,
+    allow_outside: bool = True,
 ) -> BoundaryCheckResult:
-    """Ensure target path does not escape the base workspace directory."""
-    settings = get_settings()
-    root = base_dir or settings.BASE_DIR
-
+    """Validate path and resolve target location across device."""
     try:
-        path_obj = Path(target_path)
-        if not path_obj.is_absolute():
-            resolved = (root / path_obj).resolve()
-        else:
-            resolved = path_obj.resolve()
+        resolved = resolve_target_path(target_path, base_dir=base_dir)
 
         if not allow_outside:
+            settings = get_settings()
+            root = (base_dir or settings.BASE_DIR).resolve()
             try:
-                resolved.relative_to(root.resolve())
+                resolved.relative_to(root)
             except ValueError:
                 return BoundaryCheckResult(
                     is_allowed=False,

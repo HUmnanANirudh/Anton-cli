@@ -18,6 +18,9 @@ class FileReadResult(BaseModel):
     error: Optional[str] = None
 
 
+from ai_cli.tools.filesystem.nav import resolve_target_path
+
+
 def read_file(
     file_path: str | Path,
     start_line: Optional[int] = None,
@@ -26,11 +29,9 @@ def read_file(
 ) -> FileReadResult:
     """
     Read contents of a file with optional line-range slicing and formatting.
+    Supports reading files from anywhere on the device.
     """
-    settings = get_settings()
-    path = Path(file_path)
-    if not path.is_absolute():
-        path = settings.BASE_DIR / path
+    path = resolve_target_path(file_path)
 
     if not path.exists():
         return FileReadResult(

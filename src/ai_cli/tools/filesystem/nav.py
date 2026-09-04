@@ -8,6 +8,45 @@ from typing import Optional
 from ai_cli.config.settings import get_settings
 
 
+def resolve_target_path(path_input: str | Path, base_dir: Optional[Path] = None) -> Path:
+    """
+    Resolve any file or directory path across the entire device.
+    Supports '~', environment variables ($HOME, $USER), relative paths, and user folder shortcuts.
+    """
+    if not path_input:
+        return (base_dir or Path.cwd()).resolve()
+
+    raw = str(path_input).strip().strip("'\"")
+    # Strip suffixes like ' directory' or ' folder'
+    for suffix in [" directory", " folder"]:
+        if raw.lower().endswith(suffix):
+            raw = raw[:-len(suffix)].strip()
+
+    expanded = os.path.expandvars(os.path.expanduser(raw))
+    path = Path(expanded)
+
+    if path.is_absolute():
+        return path.resolve()
+
+    root = base_dir or get_settings().BASE_DIR or Path.cwd()
+    candidate = (root / path).resolve()
+    if candidate.exists():
+        return candidate
+
+    # Check home shortcuts (e.g. 'Desktop', 'Downloads', 'Documents', 'Pictures')
+    home = Path.home()
+    if raw.lower() == "home":
+        return home.resolve()
+    if (home / raw).exists():
+        return (home / raw).resolve()
+    if (home / raw.capitalize()).exists():
+        return (home / raw.capitalize()).resolve()
+    if (home / raw.title()).exists():
+        return (home / raw.title()).resolve()
+
+    return candidate
+
+
 def get_current_working_dir() -> str:
     """Get the current absolute working directory."""
     return str(Path.cwd().resolve())
@@ -15,29 +54,11 @@ def get_current_working_dir() -> str:
 
 def change_working_dir(target_dir: str) -> str:
     """
-    Change the current working directory.
-    Expands '~', relative paths, environment variables, and well-known user folders (e.g. 'desktop', 'downloads', 'home').
+    Change the current working directory anywhere on the device.
+    Expands '~', relative paths, environment variables, and well-known user folders.
     """
     try:
-        clean_target = target_dir.strip().strip("'\"")
-        # Remove trailing words like "directory" or "folder" if user passed "desktop directory"
-        for suffix in [" directory", " folder"]:
-            if clean_target.lower().endswith(suffix):
-                clean_target = clean_target[:-len(suffix)].strip()
-
-        raw_path = os.path.expandvars(os.path.expanduser(clean_target))
-        path = Path(raw_path).resolve()
-
-        if not path.exists():
-            home = Path.home()
-            if clean_target.lower() == "home":
-                path = home
-            elif (home / clean_target).is_dir():
-                path = (home / clean_target).resolve()
-            elif (home / clean_target.capitalize()).is_dir():
-                path = (home / clean_target.capitalize()).resolve()
-            elif (home / clean_target.title()).is_dir():
-                path = (home / clean_target.title()).resolve()
+        path = resolve_target_path(target_dir)
 
         if not path.exists():
             return f"Error: Directory '{target_dir}' does not exist ({path})."
