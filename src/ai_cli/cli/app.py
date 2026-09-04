@@ -219,29 +219,73 @@ async def handle_slash_command(command_str: str, ctx: ReplContext) -> bool:
         return True
 
     if cmd == "/delete":
-        if not arg.strip():
-            console.print("[red]Usage: /delete <number>[/red]")
+        clean_arg = arg.strip()
+        if not clean_arg:
+            console.print("[red]Usage: /delete <1 2 3...> or /delete all[/red]")
             return True
-        if not arg.strip().isdigit():
-            console.print("[red]Please specify the session number to delete. (e.g. /delete 1)[/red]")
+
+        tokens = [t.strip().rstrip(",") for t in clean_arg.replace(",", " ").split() if t.strip()]
+
+        # Handle /delete all
+        if any(t.lower() in ["all", "--all", "-a"] for t in tokens):
+            auto_confirm = any(t.lower() in ["-y", "--yes", "yes", "-f", "--force"] for t in tokens)
+            if not auto_confirm:
+                console.print("\n[bold yellow]⚠️ WARNING: You are about to permanently delete ALL saved conversation sessions.[/bold yellow]")
+                try:
+                    confirm = console.input("[bold red]Are you sure you want to delete all sessions? (yes/no): [/bold red]").strip().lower()
+                except (KeyboardInterrupt, EOFError):
+                    console.print("\n[dim]✦ Deletion cancelled.[/dim]")
+                    return True
+
+                if confirm not in ["y", "yes"]:
+                    console.print("[dim]✦ Deletion cancelled.[/dim]")
+                    return True
+
+            deleted_count = ctx.session_mgr.delete_all_sessions()
+            ctx.session_id = ctx.session_mgr.create_session_id()
+            ctx.session_title = "New Conversation"
+            ctx.messages = []
+            ctx.initial_turn = True
+            console.print(f"[bold green]✓ Successfully deleted all {deleted_count} conversation session(s).[/bold green]")
+            console.print("[dim]Started a fresh new conversation.[/dim]\n")
             return True
-        idx = int(arg.strip()) - 1
-        sessions = ctx.session_mgr.list_sessions()
-        if 0 <= idx < len(sessions):
-            target = sessions[idx]
-            deleted = ctx.session_mgr.delete_session(target.session_id)
-            if deleted:
-                console.print(f"[bold green]✓ Deleted session [{idx + 1}]:[/bold green] [bold white]\"{target.title}\"[/bold white]")
-                if target.session_id == ctx.session_id:
-                    ctx.session_id = ctx.session_mgr.create_session_id()
-                    ctx.session_title = "New Conversation"
-                    ctx.messages = []
-                    ctx.initial_turn = True
-                    console.print("[dim]Switched to a fresh new conversation.[/dim]")
+
+        # Handle multiple session numbers (e.g. /delete 1 2 3 4 5)
+        sessions = ctx.session_mgr.list_sessions(limit=1000)
+        deleted_titles: List[str] = []
+        invalid_tokens: List[str] = []
+        reset_needed = False
+
+        for token in tokens:
+            if not token.isdigit():
+                invalid_tokens.append(token)
+                continue
+            idx = int(token) - 1
+            if 0 <= idx < len(sessions):
+                target = sessions[idx]
+                if ctx.session_mgr.delete_session(target.session_id):
+                    deleted_titles.append(f"[{token}] \"{target.title}\"")
+                    if target.session_id == ctx.session_id:
+                        reset_needed = True
+                else:
+                    invalid_tokens.append(token)
             else:
-                console.print(f"[red]Failed to delete session {target.session_id}.[/red]")
-        else:
-            console.print(f"[red]Invalid session number '{arg}'. Type /sessions to list conversations.[/red]")
+                invalid_tokens.append(token)
+
+        if deleted_titles:
+            console.print(f"[bold green]✓ Deleted {len(deleted_titles)} session(s):[/bold green]")
+            for item in deleted_titles:
+                console.print(f"  • [bold white]{item}[/bold white]")
+            if reset_needed:
+                ctx.session_id = ctx.session_mgr.create_session_id()
+                ctx.session_title = "New Conversation"
+                ctx.messages = []
+                ctx.initial_turn = True
+                console.print("[dim]Active session was deleted. Switched to a fresh new conversation.[/dim]")
+
+        if invalid_tokens:
+            console.print(f"[yellow]Note: Session numbers {', '.join(invalid_tokens)} were invalid or not found. Type /sessions to list conversations.[/yellow]")
+
         return True
 
     if cmd == "/help":

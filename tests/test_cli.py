@@ -101,6 +101,14 @@ async def test_handle_slash_commands():
     cont_del_invalid = await handle_slash_command("/delete 999", ctx)
     assert cont_del_invalid is True
 
+    # Multi-session deletion (e.g. /delete 1 2 3)
+    cont_del_multi = await handle_slash_command("/delete 1 2 3", ctx)
+    assert cont_del_multi is True
+
+    # /delete all with auto-confirm
+    cont_del_all = await handle_slash_command("/delete all --yes", ctx)
+    assert cont_del_all is True
+
     # Direct slashless exit and quit commands should return False
     assert await handle_slash_command("exit", ctx) is False
     assert await handle_slash_command("quit", ctx) is False

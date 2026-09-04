@@ -43,3 +43,19 @@ def test_session_lifecycle():
         deleted = mgr.delete_session(s_id)
         assert deleted is True
         assert len(mgr.list_sessions()) == 0
+
+
+def test_delete_all_sessions():
+    """Verify deleting all sessions at once."""
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        mgr = SessionManager(sessions_dir=tmp_dir)
+
+        # Create multiple sessions
+        for i in range(5):
+            s_id = f"test_session_{i}"
+            mgr.save_session(s_id, [HumanMessage(content=f"Message {i}")], "/workspace")
+
+        assert len(mgr.list_sessions()) == 5
+        deleted_count = mgr.delete_all_sessions()
+        assert deleted_count == 5
+        assert len(mgr.list_sessions()) == 0
