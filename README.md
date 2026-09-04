@@ -81,6 +81,63 @@ Type `/` in the prompt to see available commands:
 
 You can also type words like `quit` or `exit` directly to leave.
 
+## Architecture
+
+```mermaid
+graph TD
+    subgraph UI ["Terminal Interface"]
+        Input["User Input & Slash Commands"]
+        Output["Boxed Output & Live Thinking View"]
+    end
+
+    subgraph Guards ["Safety Guardrails"]
+        InputGuard["Input Guardrail"]
+        ExecGuard["Execution Guardrail"]
+        OutputGuard["Output Guardrail"]
+    end
+
+    subgraph Agent ["Agent Core (LangGraph)"]
+        State["Agent State & History"]
+        Planner["Reasoning & Decision Loop"]
+    end
+
+    subgraph Provider ["Model Provider"]
+        Groq["Groq API (openai/gpt-oss-20b)"]
+    end
+
+    subgraph Tools ["Autonomous Tools"]
+        FS["Filesystem (Read, Write, Edit)"]
+        Nav["Navigation (cd, pwd, whoami)"]
+        Shell["Shell Runner"]
+        Web["Web Search (Tavily)"]
+    end
+
+    subgraph Storage ["Global Storage (~/.anton)"]
+        Sessions["Sessions (~/.anton/sessions)"]
+        Chroma["ChromaDB (~/.anton/chroma)"]
+    end
+
+    Input --> InputGuard
+    InputGuard --> State
+    State --> Planner
+    Planner <--> Groq
+    Planner -->|Tool Request| ExecGuard
+    ExecGuard --> Tools
+    Tools --> State
+    Planner -->|Response| OutputGuard
+    OutputGuard --> Output
+    State <--> Storage
+```
+
+### How It Works
+
+1. **Input**: You enter a request or slash command into the terminal.
+2. **Input Guardrail**: Checks the prompt for unsafe content or injection attacks.
+3. **Agent Loop**: LangGraph maintains the conversation state and asks the model for the next step.
+4. **Tool Execution**: When the agent needs to read files, run commands, change directories, or search the web, the execution guardrail validates the action before running it.
+5. **Storage**: The agent reads and saves sessions and index data in `~/.anton/` so your history stays intact across directories.
+6. **Output**: The terminal renders the response with collapsible thinking steps and clean output panels.
+
 ## Development and Testing
 
 Run tests:
