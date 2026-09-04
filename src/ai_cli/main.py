@@ -14,6 +14,7 @@ from ai_cli.cli.renderer import (
     render_eval_summary,
     render_markdown,
 )
+from ai_cli.cli.updater import update_anton
 from ai_cli.config.settings import get_settings
 from ai_cli.evaluations.benchmark import BenchmarkRunner
 from ai_cli.memory.chroma import ChromaMemory

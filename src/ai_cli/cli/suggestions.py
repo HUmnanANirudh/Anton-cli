@@ -9,6 +9,7 @@ SLASH_COMMANDS = {
     "/search": "Directly search the web via Tavily / Google Search (e.g. /search query)",
     "/vsearch": "Directly query local ChromaDB vector database (e.g. /vsearch symbol)",
     "/eval": "Run the multi-agent evaluation benchmark suite",
+    "/update": "Check and update Anton CLI to the latest version",
     "/clear": "Clear the terminal screen",
     "/exit": "Exit Anton CLI",
     "/quit": "Exit Anton CLI",

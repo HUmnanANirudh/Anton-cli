@@ -8,7 +8,6 @@ BIN_DIR="$HOME/.local/bin"
 mkdir -p "$BIN_DIR"
 chmod +x "$SCRIPT_DIR/anton.sh"
 
-# Create or update symlink
 ln -sf "$SCRIPT_DIR/anton.sh" "$BIN_DIR/anton"
 
 echo "✅ Successfully linked Anton CLI to $BIN_DIR/anton"

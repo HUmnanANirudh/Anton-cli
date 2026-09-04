@@ -13,7 +13,7 @@ class Settings(BaseSettings):
 
     # Application details
     APP_NAME: str = "Anton CLI"
-    APP_VERSION: str = "0.1.0"
+    APP_VERSION: str = "0.1"
     DEBUG: bool = False
 
     # Paths

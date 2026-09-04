@@ -16,6 +16,7 @@ from ai_cli.cli.renderer import (
     render_markdown,
 )
 from ai_cli.cli.suggestions import SLASH_COMMANDS, SlashCommandCompleter
+from ai_cli.cli.updater import update_anton
 from ai_cli.config.settings import get_settings
 from ai_cli.evaluations.benchmark import BenchmarkRunner
 from ai_cli.memory.chroma import ChromaMemory
@@ -104,6 +105,10 @@ async def handle_slash_command(command_str: str) -> bool:
         runner = BenchmarkRunner(agent_graph=agent)
         summary = await runner.run_all()
         render_eval_summary(summary)
+        return True
+
+    if cmd == "/update":
+        await update_anton()
         return True
 
     console.print(f"[red]Unknown slash command '{cmd}'. Type /help for available commands.[/red]")
