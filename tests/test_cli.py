@@ -34,15 +34,18 @@ def test_cli_parser_arguments():
     args4 = parser.parse_args(["--update"])
     assert args4.update is True
 
+    args5 = parser.parse_args(["--model", "openai/gpt-oss-120b"])
+    assert args5.model == "openai/gpt-oss-120b"
+
 
 def test_slash_command_completer():
     """Verify autocompletion suggestions for slash commands."""
     completer = SlashCommandCompleter()
-    doc = Document("/up", 3)
+    doc = Document("/mo", 3)
     completions = list(completer.get_completions(doc, None))
     
     assert len(completions) == 1
-    assert completions[0].text == "/update"
+    assert completions[0].text == "/model"
 
 
 from ai_cli.cli.app import ReplContext, handle_slash_command
@@ -55,6 +58,15 @@ async def test_handle_slash_commands():
     # /help should return True (continue loop)
     cont_help = await handle_slash_command("/help", ctx)
     assert cont_help is True
+
+    # /model should show model table
+    cont_model_table = await handle_slash_command("/model", ctx)
+    assert cont_model_table is True
+
+    # /model <id> should switch active model
+    cont_model_switch = await handle_slash_command("/model llama-3.1-8b-instant", ctx)
+    assert cont_model_switch is True
+    assert ctx.current_model == "llama-3.1-8b-instant"
 
     # /new should reset messages
     ctx.messages = ["sample"]

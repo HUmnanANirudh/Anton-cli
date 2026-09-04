@@ -62,6 +62,13 @@ def build_parser() -> argparse.ArgumentParser:
         help="Check and update Anton CLI to the latest version.",
     )
     parser.add_argument(
+        "--model",
+        type=str,
+        default=None,
+        metavar="MODEL",
+        help="Specify Groq model (e.g. llama-3.3-70b-versatile, llama-3.1-8b-instant, openai/gpt-oss-120b).",
+    )
+    parser.add_argument(
         "-v",
         "--version",
         action="store_true",
@@ -153,7 +160,7 @@ async def async_main() -> None:
         return
 
     # Default to interactive REPL
-    await run_interactive_session()
+    await run_interactive_session(model_name=args.model)
 
 
 def main() -> None:
