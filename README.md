@@ -18,13 +18,17 @@ This project uses **`uv`** for all package management, virtual environments, and
 ```bash
 # 1. Create the project environment and install dependencies 
 uv sync 
+
 # 2. Install development dependencies
 uv sync --extra dev 
+
 # 3. Set environment variables
 cp .env.example .env 
+
 # 4. Edit .env and add your API keys 
-# GROQ_API_KEY=... 
-# TAVILY_API_KEY=...
+GROQ_API_KEY=... 
+TAVILY_API_KEY=...
+
 # 5. Run Anton CLI
 uv run anton
 ```
